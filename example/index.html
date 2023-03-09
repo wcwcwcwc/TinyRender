@@ -1,17 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <link rel="shortcut icon" href="#"/>
+    <link rel="shortcut icon" href="#" />
     <title>Document</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        #webglDOM {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 100%;
+        }
+    </style>
 </head>
+
 <body>
+    <canvas id='webglDOM'></canvas>
     <script src="../dist/tinyRender.umd.js"></script>
-    <script >
-        let test = new tinyRender();
-        let uuu = test.add();
-        console.log(uuu)
+    <script>
+        let renderer = new TinyRender.Engine({
+            container: 'webglDOM'
+        });
+        renderer.addCamera({
+            fov: 75,
+            aspect: window.innerWidth / window.innerHeight,
+            nearZ: 0.01,
+            farZ: 1000
+        }, [0, 0, 100])
+        window.renderer = renderer
     </script>
 </body>
+
 </html>

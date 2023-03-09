@@ -5,16 +5,17 @@ import camelCase from 'lodash.camelcase'
 import typescript from 'rollup-plugin-typescript2'
 import json from 'rollup-plugin-json'
 import serve from 'rollup-plugin-serve';
+import livereload from 'rollup-plugin-livereload'
 
 const pkg = require('./package.json')
 
-const libraryName = 'index'
+const libraryName = 'TinyRender'
 
 export default {
   input: `src/${libraryName}.ts`,
   output: [
-    { file: pkg.main, name: 'tinyRender', format: 'umd', sourcemap: true },
-    { file: pkg.module, name: 'tinyRender', format: 'es', sourcemap: true },
+    { file: pkg.main, name: 'TinyRender', format: 'umd', sourcemap: true },
+    { file: pkg.module, name: 'TinyRender', format: 'es', sourcemap: true },
   ],
   // Indicate here external modules you don't wanna include in your bundle (i.e.: 'lodash')
   external: [],
@@ -40,6 +41,7 @@ export default {
       port: 8080,
       openPage: '/example/index.html', // 打开的页面
       contentBase: ''
-    })
+    }),
+    // livereload()
   ],
 }
