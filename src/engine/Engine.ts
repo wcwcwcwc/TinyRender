@@ -1,6 +1,7 @@
 import PerspectiveCamera, {
   IPerspectiveCamera
 } from '../camera/PerspectiveCamera'
+import Mesh from '../geometry/Mesh'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -17,6 +18,7 @@ export default class Engine {
   public width: number
   public height: number
   public camera: any
+  public meshArray: Array<Mesh> = []
   constructor(options: IRenderOptions) {
     this.container = options.container
     this.setup()
@@ -74,5 +76,8 @@ export default class Engine {
     this.camera = new PerspectiveCamera(options, this.canvas)
     this.camera.setPosition(cameraPosition)
     return this
+  }
+  addMesh(mesh: Mesh) {
+    this.meshArray.push(mesh)
   }
 }
