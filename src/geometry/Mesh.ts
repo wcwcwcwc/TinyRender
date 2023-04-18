@@ -1,5 +1,5 @@
 import Material from './Material'
-import { Vector3 } from '../math/math'
+import { Vector3 } from '../math/Vector3'
 
 export default class Mesh {
   public type: string

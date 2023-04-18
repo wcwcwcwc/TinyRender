@@ -2,6 +2,8 @@ import PerspectiveCamera, {
   IPerspectiveCamera
 } from '../camera/PerspectiveCamera'
 import Mesh from '../geometry/Mesh'
+import { Matrix4 } from '../math/Matrix4'
+import { Vector3 } from '../math/Vector3'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -19,6 +21,8 @@ export default class Engine {
   public height: number
   public camera: any
   public meshArray: Array<Mesh> = []
+  public projectionMatrix: any
+  public projectionMatrixInverse: any
   constructor(options: IRenderOptions) {
     this.container = options.container
     this.setup()
@@ -77,7 +81,21 @@ export default class Engine {
     this.camera.setPosition(cameraPosition)
     return this
   }
+  // 添加mesh
   addMesh(mesh: Mesh) {
     this.meshArray.push(mesh)
+  }
+
+  // 渲染
+  render() {
+    // mvp矩阵计算
+    // attributes
+    // uniforms
+    // this.viewMatrix = null;
+    this.projectionMatrix = this.camera.camera.projectionMatrix
+    this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
+    debugger
+    this.camera.setViewMatrix()
+    // this.wolrdMatrix = null;
   }
 }
