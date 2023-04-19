@@ -37,12 +37,12 @@ export default class Program {
     gl.compileShader(vertexShader)
     gl.attachShader(this.program, vertexShader)
 
+    gl.linkProgram(this.program)
+
     // 绑定attributes
     this.bindAttributeLocations()
     // 绑定uniform
     this.bindUniformLocations()
-
-    gl.linkProgram(this.program)
     gl.deleteShader(vertexShader)
     gl.deleteShader(fragmentShader)
   }

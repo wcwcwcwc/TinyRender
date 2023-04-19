@@ -1,5 +1,6 @@
 import Material from './Material'
 import { Vector3 } from '../math/Vector3'
+import { Matrix4 } from '../math/Matrix4'
 
 export default class Mesh {
   public type: string
@@ -11,11 +12,13 @@ export default class Mesh {
   public normals: Array<number> = []
   public uvs: Array<number> = []
   public numberOfVertices: number
+  public worldMatrix: Matrix4
   constructor(type: string, options: any) {
     this.type = type
     this.options = options
     this.position = [0, 0, 0]
     this.numberOfVertices = 0
+    this.worldMatrix = new Matrix4()
     this.setUp()
   }
 

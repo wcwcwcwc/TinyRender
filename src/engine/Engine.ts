@@ -4,6 +4,11 @@ import PerspectiveCamera, {
 import Mesh from '../geometry/Mesh'
 import { Matrix4 } from '../math/Matrix4'
 import { Vector3 } from '../math/Vector3'
+import Program from '../webgl/Program'
+//@ts-ignore
+import basicFS from '../webgl/shaders/basicFS.glsl'
+//@ts-ignore
+import basicVS from '../webgl/shaders/basicVS.glsl'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -21,8 +26,9 @@ export default class Engine {
   public height: number
   public camera: any
   public meshArray: Array<Mesh> = []
-  public projectionMatrix: any
-  public projectionMatrixInverse: any
+  public projectionMatrix: Matrix4
+  public projectionMatrixInverse: Matrix4
+  public viewMatrix: Matrix4
   constructor(options: IRenderOptions) {
     this.container = options.container
     this.setup()
@@ -91,11 +97,19 @@ export default class Engine {
     // mvp矩阵计算
     // attributes
     // uniforms
-    // this.viewMatrix = null;
     this.projectionMatrix = this.camera.camera.projectionMatrix
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
-    debugger
-    this.camera.setViewMatrix()
-    // this.wolrdMatrix = null;
+    this.viewMatrix = this.camera.setViewMatrix()
+
+    for (let index = 0; index < this.meshArray.length; index++) {
+      const mesh = this.meshArray[index]
+      let worldMatrix = mesh.worldMatrix
+      let program = new Program({
+        gl: this._gl,
+        vs: basicVS,
+        fs: basicFS
+      })
+      console.log(program)
+    }
   }
 }
