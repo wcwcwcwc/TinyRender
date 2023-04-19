@@ -1,5 +1,9 @@
 import { StaticDrawUsage } from '../constants.js'
-
+import {
+  VertexBuffer,
+  IndexBuffer,
+  VertexArrayObject
+} from '../webgl/VertexArrayObject'
 export class BufferAttribute {
   public name: string
   public array: any
@@ -11,6 +15,8 @@ export class BufferAttribute {
   public type: number
   public stride: number
   public offset: number
+  public vertexBuffer: VertexBuffer | null
+  public IndexBuffer: IndexBuffer | null
   constructor(array: any, itemSize: number, normalized: boolean) {
     this.name = ''
 
@@ -23,5 +29,7 @@ export class BufferAttribute {
     this.updateRange = { offset: 0, count: -1 }
     this.stride = 0
     this.offset = 0
+    this.vertexBuffer = null
+    this.IndexBuffer = null
   }
 }

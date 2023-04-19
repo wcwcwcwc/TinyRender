@@ -10,6 +10,12 @@ import basicFS from '../webgl/shaders/basicFS.glsl'
 //@ts-ignore
 import basicVS from '../webgl/shaders/basicVS.glsl'
 
+import {
+  VertexBuffer,
+  IndexBuffer,
+  VertexArrayObject
+} from '../webgl/VertexArrayObject'
+
 type Nullable<T> = T | null
 // render构造函数参数接口
 interface IRenderOptions {
@@ -112,8 +118,16 @@ export default class Engine {
       let { attributesLocations, uniformLocations } = program
       let attributes = mesh.attributes
       for (let key in attributesLocations) {
+        let bufferAttribute = attributes[key]
+        let attributeLocation = attributesLocations[key]
         if (attributes[key]) {
-          //let vertexBuffer =
+          let vertexBuffer = new VertexBuffer(
+            this._gl,
+            bufferAttribute,
+            attributeLocation,
+            false
+          )
+          bufferAttribute.vertexBuffer = vertexBuffer
         }
       }
     }
