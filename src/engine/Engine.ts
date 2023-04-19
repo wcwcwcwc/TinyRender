@@ -109,7 +109,13 @@ export default class Engine {
         vs: basicVS,
         fs: basicFS
       })
-      console.log(program)
+      let { attributesLocations, uniformLocations } = program
+      let attributes = mesh.attributes
+      for (let key in attributesLocations) {
+        if (attributes[key]) {
+          //let vertexBuffer =
+        }
+      }
     }
   }
 }

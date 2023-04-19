@@ -1,6 +1,11 @@
 import Material from './Material'
 import { Vector3 } from '../math/Vector3'
 import { Matrix4 } from '../math/Matrix4'
+import { BufferAttribute } from '../data/BufferAttribute'
+
+interface Attributes {
+  [key: string]: BufferAttribute
+}
 
 export default class Mesh {
   public type: string
@@ -13,12 +18,15 @@ export default class Mesh {
   public uvs: Array<number> = []
   public numberOfVertices: number
   public worldMatrix: Matrix4
+  public attributes: Attributes
+  public index: BufferAttribute
   constructor(type: string, options: any) {
     this.type = type
     this.options = options
     this.position = [0, 0, 0]
     this.numberOfVertices = 0
     this.worldMatrix = new Matrix4()
+    this.attributes = {}
     this.setUp()
   }
 
@@ -32,6 +40,26 @@ export default class Mesh {
         this.buildPlane('x', 'z', 'y', 1, -1, width, depth, -height, 1, 1, 3) // ny
         this.buildPlane('x', 'y', 'z', 1, -1, width, height, depth, 1, 1, 4) // pz
         this.buildPlane('x', 'y', 'z', -1, -1, width, height, -depth, 1, 1, 5) // nz
+        this.attributes['a_position'] = new BufferAttribute(
+          new Float32Array(this.vertices),
+          3,
+          false
+        )
+        this.attributes['a_normal'] = new BufferAttribute(
+          new Float32Array(this.normals),
+          3,
+          false
+        )
+        this.attributes['a_uv'] = new BufferAttribute(
+          new Float32Array(this.uvs),
+          2,
+          false
+        )
+        this.index = new BufferAttribute(
+          new Uint16Array(this.indices),
+          1,
+          false
+        )
 
         break
 

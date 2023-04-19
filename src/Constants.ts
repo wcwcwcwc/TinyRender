@@ -1,0 +1,9 @@
+export const StaticDrawUsage = 35044
+export const DynamicDrawUsage = 35048
+export const StreamDrawUsage = 35040
+export const StaticReadUsage = 35045
+export const DynamicReadUsage = 35049
+export const StreamReadUsage = 35041
+export const StaticCopyUsage = 35046
+export const DynamicCopyUsage = 35050
+export const StreamCopyUsage = 35042

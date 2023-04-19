@@ -1,20 +1,26 @@
+import { BufferAttribute } from '../data/BufferAttribute'
+
 export class VertexBuffer {
   length: number
-  attributes: Array<any>
+  attributeLocation: number
   itemSize: number
   dynamicDraw: boolean
   gl: WebGLRenderingContext | WebGL2RenderingContext
   buffer: WebGLBuffer | null
+  bufferAttribute: BufferAttribute
+  public array: any
 
   constructor(
     gl: WebGLRenderingContext,
-    array: any,
-    attributes: Array<any>,
+    bufferAttribute: BufferAttribute,
+    attributeLocation: number,
     dynamicDraw: boolean
   ) {
-    this.length = array.length
-    this.attributes = attributes
-    this.itemSize = array.bytesPerElement
+    this.attributeLocation = attributeLocation
+    this.bufferAttribute = bufferAttribute
+    this.array = this.bufferAttribute.array
+    this.itemSize = this.array.bytesPerElement
+
     this.dynamicDraw = dynamicDraw
 
     this.gl = gl
@@ -22,7 +28,7 @@ export class VertexBuffer {
     this.bind()
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      array.arrayBuffer,
+      this.array,
       this.dynamicDraw ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW
     )
   }
@@ -34,35 +40,31 @@ export class VertexBuffer {
   updateData(array: any) {
     const { gl } = this
     this.bind()
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, array.arrayBuffer)
+    gl.bufferSubData(gl.ARRAY_BUFFER, 0, array.array)
   }
-  enableAttributes(program: any) {
+  enableAttributes() {
     const { gl } = this
-    for (let j = 0; j < this.attributes.length; j++) {
-      const member = this.attributes[j]
-      const attribIndex: number | void = program.attributes[member.name]
-      if (attribIndex !== undefined) {
-        gl.enableVertexAttribArray(attribIndex)
-      }
+    gl.enableVertexAttribArray(this.attributeLocation)
+  }
+  setVertexAttribPointers() {
+    const { gl } = this
+    let type = gl.FLOAT
+    if (this.array instanceof Float32Array) {
+      type = gl.FLOAT
+    } else if (this.array instanceof Uint16Array) {
+      type = gl.UNSIGNED_SHORT
     }
-  }
-  setVertexAttribPointers(program: any) {
-    const { gl } = this
-    for (let j = 0; j < this.attributes.length; j++) {
-      const member = this.attributes[j]
-      const attribIndex: number | void = program.attributes[member.name]
-      const { size, type, normalized, stride, offset } = member
-
-      if (attribIndex !== undefined) {
-        gl.vertexAttribPointer(
-          attribIndex,
-          size,
-          type,
-          normalized,
-          stride,
-          offset
-        )
-      }
+    let size = this.bufferAttribute.itemSize
+    const { normalized, stride, offset } = this.bufferAttribute
+    if (this.attributeLocation !== undefined) {
+      gl.vertexAttribPointer(
+        this.attributeLocation,
+        size,
+        type,
+        normalized,
+        stride,
+        offset
+      )
     }
   }
   destroy() {
@@ -86,7 +88,7 @@ export class IndexBuffer {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffer)
     gl.bufferData(
       gl.ELEMENT_ARRAY_BUFFER,
-      array.arrayBuffer,
+      array.array,
       this.dynamicDraw ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW
     )
   }
@@ -97,7 +99,7 @@ export class IndexBuffer {
     const gl = this.gl
     //this.context.unbindVAO();
     this.bind()
-    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, array.arrayBuffer)
+    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, array.array)
   }
 }
 
@@ -115,12 +117,22 @@ export class VertexArrayObject {
   bind() {
     this.gl.bindVertexArray(this.vao)
   }
+  unbind() {
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null)
+    this.gl.bindVertexArray(null)
+  }
   // VBO组合VAO
-  packUp(VertexBuffer: VertexBuffer, indexBuffer: any) {
+  // render之前创建vbo，完成缓冲区创建及数据绑定
+  // render时完成VAO
+  packUp(VertexBufferArray: [VertexBuffer], indexBuffer: any) {
     this.bind()
-    VertexBuffer.enableAttributes(this.program)
-    VertexBuffer.bind()
-    VertexBuffer.setVertexAttribPointers(this.program)
+    for (let index = 0; index < VertexBufferArray.length; index++) {
+      const vertexBuffer = VertexBufferArray[index]
+      vertexBuffer.enableAttributes()
+      vertexBuffer.bind()
+      vertexBuffer.setVertexAttribPointers()
+    }
     indexBuffer.bind()
+    this.unbind()
   }
 }
