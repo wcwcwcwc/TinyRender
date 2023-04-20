@@ -165,7 +165,7 @@ export default class Engine {
           let g = color[1]
           let b = color[2]
           let a = color[3]
-          // this._gl.Uniform4f(uniformLocation, 1.0, 0.0, 0.0, 1.0)
+          this._gl.uniform4f(uniformLocation, r, g, b, a)
         }
       }
       // draw
