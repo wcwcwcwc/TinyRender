@@ -37,7 +37,7 @@
             nearZ: 0.01,
             farZ: 1000
         },renderer.canvas)
-        camera.setPosition([30, 30, 100]);
+        camera.setPosition([0.20843,-104.146, 30.8784]);
         camera.lookAt = [0, 0, 0];
         renderer.addCamera(camera);
         // 设置相机可交互
@@ -49,7 +49,7 @@
             depth: 20
         });
         // 设置mesh位置
-        cubeMesh.position = [0, 0, 0]
+        cubeMesh.setPosition([0, 0, 10]) 
         let cubeMaterial = new TinyRender.Material({
             'color': 'rgba(1.0,0.0,1.0,1.0)',
             'opacity': 1.0
@@ -58,14 +58,29 @@
         cubeMesh.material = cubeMaterial;
         renderer.addMesh(cubeMesh)
 
+        let planeMesh = new TinyRender.Mesh('plane',{
+            width:100,
+            height:100
+        })
+        planeMesh.setPosition([0, 0, 0]);
+        let planeMaterial = new TinyRender.Material({
+            'color': 'rgba(0.76470588,1.0,0.8862745098,1.0)',
+            'opacity': 1.0
+        })
+        // 添加材质
+        planeMesh.material = planeMaterial;
+        renderer.addMesh(planeMesh)
+
         function animate() {
             requestAnimationFrame(animate);
             renderer.render();
+            // console.log(renderer.camera.camera)
         }
 
         // renderer.render();
         animate()
         console.log(renderer)
+
     </script>
 </body>
 

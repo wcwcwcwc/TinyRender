@@ -117,6 +117,7 @@ export default class Engine {
 
     for (let index = 0; index < this.meshArray.length; index++) {
       const mesh = this.meshArray[index]
+      mesh.updateWorldMatrix()
       let worldMatrix = mesh.worldMatrix
       mesh.program = new Program({
         gl: this._gl,
@@ -170,6 +171,13 @@ export default class Engine {
       }
       // draw
       mesh.vao.bind()
+      this._gl.enable(this._gl.DEPTH_TEST)
+      this._gl.depthFunc(this._gl.LEQUAL)
+      if (mesh.material.opacity === 1) {
+        this._gl.depthMask(true)
+      } else {
+        this._gl.depthMask(false)
+      }
       this._gl.drawElements(
         this._gl.TRIANGLES,
         mesh.indexBuffer.count,
