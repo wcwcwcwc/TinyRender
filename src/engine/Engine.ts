@@ -88,10 +88,15 @@ export default class Engine {
     this._gl.clear(this._gl.STENCIL_BUFFER_BIT)
   }
   // 添加相机
-  addCamera(options: IPerspectiveCamera, cameraPosition: Array<number>) {
-    this.camera = new PerspectiveCamera(options, this.canvas)
-    this.camera.setPosition(cameraPosition)
+  addCamera(camera: PerspectiveCamera) {
+    this.camera = camera
     return this
+  }
+
+  addCameraOrbitControls() {
+    if (this.camera) {
+      this.camera.addCameraOrbitControls(this.canvas)
+    }
   }
   // 添加mesh
   addMesh(mesh: Mesh) {

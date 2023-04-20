@@ -27,8 +27,9 @@ export default class PerspectiveCamera {
   public up: any
   public rotation: Euler
   public quaternion: Quaternion
-  constructor(options: IPerspectiveCamera, canvas: any) {
-    this.canvas = canvas
+  public lookAt: number[]
+  constructor(options: IPerspectiveCamera) {
+    // this.canvas = canvas
     this.fov = options.fov || 75
     this.aspect = options.aspect || 1
     this.nearZ = options.nearZ || 0.1
@@ -39,21 +40,23 @@ export default class PerspectiveCamera {
       this.nearZ,
       this.farZ
     )
-    this.cameraControls = new OrbitControls(this.camera, this.canvas)
-    this.cameraControls.enableZoom = true
-    this.cameraControls.enableRotate = true
-    this.cameraControls.enablePan = true
-    this.cameraControls.rotateSpeed = 0.3
-    this.cameraControls.zoomSpeed = 1.0
-    this.cameraControls.panSpeed = 2.0
-    this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight
-    this.camera.updateProjectionMatrix()
-    this.cameraControls.target.set(0, 0, 0)
     this.scale = new Vector3(1, 1, 1)
     this.target = new Vector3(0, 0, 0)
     this.up = new Vector3(0, 1, 0)
     this.rotation = new Euler()
     this.quaternion = new Quaternion()
+    this.lookAt = [0, 0, 0]
+  }
+  addCameraOrbitControls(canvas: any) {
+    //@ts-ignore
+    this.cameraControls = new OrbitControls(this.camera, canvas)
+    // this.cameraControls.enableZoom = true
+    // this.cameraControls.enableRotate = true
+    // this.cameraControls.enablePan = true
+    // this.cameraControls.rotateSpeed = 0.3
+    // this.cameraControls.zoomSpeed = 1.0
+    // this.cameraControls.panSpeed = 2.0
+    // this.cameraControls.target.set(0, 0, 0)
   }
   // 设置相机位置
   setPosition(cameraPosition: Array<number>) {
@@ -64,10 +67,21 @@ export default class PerspectiveCamera {
     )
     this.position = this.camera.position
   }
+
   setViewMatrix() {
+    // 设定相机看向目标，求出相机自身旋转
+    // 相机位置、相机自身旋转、缩放比求出视图矩阵
+    let lookAtMatrix = new Matrix4()
+    let lookAtVector = new Vector3(
+      this.lookAt[0],
+      this.lookAt[1],
+      this.lookAt[2]
+    )
+    lookAtMatrix.lookAt(this.position, lookAtVector, this.up)
+    this.quaternion.setFromRotationMatrix(lookAtMatrix)
+
     this.viewMatrix = new Matrix4()
     this.viewMatrix.compose(this.position, this.quaternion, this.scale)
-    // this.viewMatrix.lookAt(this.position, this.target, this.up);
     this.viewMatrix.invert()
     return this.viewMatrix
   }
