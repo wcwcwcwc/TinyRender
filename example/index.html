@@ -44,12 +44,12 @@
         renderer.addCameraOrbitControls();
         // 添加mesh
         let cubeMesh = new TinyRender.Mesh('cube', {
-            height: 20,
-            width: 20,
-            depth: 20
+            height: 15,
+            width: 15,
+            depth: 50
         });
         // 设置mesh位置
-        cubeMesh.setPosition([0, 0, 10]) 
+        cubeMesh.setPosition([0, 0, 25]) 
         let cubeMaterial = new TinyRender.Material({
             'color': 'rgba(1.0,0.0,1.0,1.0)',
             'opacity': 1.0
@@ -59,8 +59,8 @@
         renderer.addMesh(cubeMesh)
 
         let planeMesh = new TinyRender.Mesh('plane',{
-            width:100,
-            height:100
+            width:150,
+            height:150
         })
         planeMesh.setPosition([0, 0, 0]);
         let planeMaterial = new TinyRender.Material({
