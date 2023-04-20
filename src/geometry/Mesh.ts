@@ -2,6 +2,12 @@ import Material from './Material'
 import { Vector3 } from '../math/Vector3'
 import { Matrix4 } from '../math/Matrix4'
 import { BufferAttribute } from '../data/BufferAttribute'
+import {
+  VertexBuffer,
+  IndexBuffer,
+  VertexArrayObject
+} from '../webgl/VertexArrayObject'
+import Program from '../webgl/Program'
 
 interface Attributes {
   [key: string]: BufferAttribute
@@ -20,6 +26,10 @@ export default class Mesh {
   public worldMatrix: Matrix4
   public attributes: Attributes
   public index: BufferAttribute
+  public vertexBufferArray: VertexBuffer[]
+  public vao: VertexArrayObject | null
+  public program: Program
+  public indexBuffer: IndexBuffer
   constructor(type: string, options: any) {
     this.type = type
     this.options = options
@@ -27,6 +37,8 @@ export default class Mesh {
     this.numberOfVertices = 0
     this.worldMatrix = new Matrix4()
     this.attributes = {}
+    this.vertexBufferArray = []
+    this.vao = null
     this.setUp()
   }
 

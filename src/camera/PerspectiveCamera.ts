@@ -48,7 +48,7 @@ export default class PerspectiveCamera {
     this.cameraControls.panSpeed = 2.0
     this.camera.aspect = this.canvas.clientWidth / this.canvas.clientHeight
     this.camera.updateProjectionMatrix()
-    this.cameraControls.target.set(0, 1, 0)
+    this.cameraControls.target.set(0, 0, 0)
     this.scale = new Vector3(1, 1, 1)
     this.target = new Vector3(0, 0, 0)
     this.up = new Vector3(0, 1, 0)

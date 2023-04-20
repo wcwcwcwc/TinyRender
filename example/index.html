@@ -38,9 +38,9 @@
         }, [0, 0, 100])
         // 添加mesh
         let cubeMesh = new TinyRender.Mesh('cube', {
-            height: 10,
-            width: 10,
-            depth: 10
+            height: 20,
+            width: 20,
+            depth: 20
         });
         // 设置mesh位置
         cubeMesh.position = [0, 0, 0]
@@ -51,9 +51,14 @@
         // 添加材质
         cubeMesh.material = cubeMaterial;
         renderer.addMesh(cubeMesh)
+        // animate()
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render();
+        }
 
         renderer.render();
-
 
         // 组成geometry
         // let cubeGeometry = new TinyRender.Geometry(cubeMesh, cubeMaterial);

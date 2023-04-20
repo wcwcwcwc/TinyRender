@@ -19,7 +19,7 @@ export class VertexBuffer {
     this.attributeLocation = attributeLocation
     this.bufferAttribute = bufferAttribute
     this.array = this.bufferAttribute.array
-    this.itemSize = this.array.bytesPerElement
+    this.itemSize = this.bufferAttribute.itemSize
 
     this.dynamicDraw = dynamicDraw
 
@@ -54,7 +54,7 @@ export class VertexBuffer {
     } else if (this.array instanceof Uint16Array) {
       type = gl.UNSIGNED_SHORT
     }
-    let size = this.bufferAttribute.itemSize
+    let size = this.itemSize
     const { normalized, stride, offset } = this.bufferAttribute
     if (this.attributeLocation !== undefined) {
       gl.vertexAttribPointer(
@@ -80,26 +80,34 @@ export class IndexBuffer {
   dynamicDraw: boolean
   gl: WebGLRenderingContext | WebGL2RenderingContext
   buffer: WebGLBuffer | null
-  constructor(gl: any, array: any, dynamicDraw?: boolean) {
+  bytesPerElement: any
+  count: number
+  constructor(
+    gl: any,
+    bufferAttribute: BufferAttribute,
+    dynamicDraw?: boolean
+  ) {
     this.gl = gl
     this.buffer = gl.createBuffer()
     this.dynamicDraw = Boolean(dynamicDraw)
+    this.bytesPerElement = bufferAttribute.array.BYTES_PER_ELEMENT
+    this.count = bufferAttribute.count
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffer)
     gl.bufferData(
       gl.ELEMENT_ARRAY_BUFFER,
-      array.array,
+      bufferAttribute.array,
       this.dynamicDraw ? gl.DYNAMIC_DRAW : gl.STATIC_DRAW
     )
   }
   bind() {
     this.gl.bindBuffer(this.gl.ELEMENT_ARRAY_BUFFER, this.buffer)
   }
-  updateData(array: any) {
+  updateData(bufferAttribute: BufferAttribute) {
     const gl = this.gl
     //this.context.unbindVAO();
     this.bind()
-    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, array.array)
+    gl.bufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, bufferAttribute.array)
   }
 }
 
@@ -108,9 +116,8 @@ export class VertexArrayObject {
   public vao: any
   public program: any
 
-  constructor(gl: any, program: any) {
+  constructor(gl: any) {
     this.gl = gl
-    this.program = program
     this.vao = gl.createVertexArray()
     this.gl.bindVertexArray(this.vao)
   }
@@ -124,7 +131,7 @@ export class VertexArrayObject {
   // VBO组合VAO
   // render之前创建vbo，完成缓冲区创建及数据绑定
   // render时完成VAO
-  packUp(VertexBufferArray: [VertexBuffer], indexBuffer: any) {
+  packUp(VertexBufferArray: VertexBuffer[], indexBuffer: any) {
     this.bind()
     for (let index = 0; index < VertexBufferArray.length; index++) {
       const vertexBuffer = VertexBufferArray[index]

@@ -2,6 +2,7 @@
 import { Vector3 } from './Vector3'
 
 class Matrix4 {
+  public elements: number[]
   constructor() {
     this.elements = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]
 

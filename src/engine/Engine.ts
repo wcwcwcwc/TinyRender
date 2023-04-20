@@ -98,11 +98,14 @@ export default class Engine {
     this.meshArray.push(mesh)
   }
 
-  // 渲染
+  /**渲染
+   * mvp矩阵计算
+   * attributes
+   * uniforms
+   * drawCall
+   */
   render() {
-    // mvp矩阵计算
-    // attributes
-    // uniforms
+    this.resize()
     this.projectionMatrix = this.camera.camera.projectionMatrix
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
     this.viewMatrix = this.camera.setViewMatrix()
@@ -110,13 +113,16 @@ export default class Engine {
     for (let index = 0; index < this.meshArray.length; index++) {
       const mesh = this.meshArray[index]
       let worldMatrix = mesh.worldMatrix
-      let program = new Program({
+      mesh.program = new Program({
         gl: this._gl,
         vs: basicVS,
         fs: basicFS
       })
-      let { attributesLocations, uniformLocations } = program
+
+      let { attributesLocations, uniformLocations } = mesh.program
       let attributes = mesh.attributes
+      // TODO
+      // render前完成bufferData
       for (let key in attributesLocations) {
         let bufferAttribute = attributes[key]
         let attributeLocation = attributesLocations[key]
@@ -128,8 +134,44 @@ export default class Engine {
             false
           )
           bufferAttribute.vertexBuffer = vertexBuffer
+          mesh.vertexBufferArray.push(vertexBuffer)
         }
       }
+      mesh.indexBuffer = new IndexBuffer(this._gl, mesh.index, false)
+      this._gl.useProgram(mesh.program.program)
+      mesh.vao = new VertexArrayObject(this._gl)
+      mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
+      const mat4array = new Float32Array(16)
+      // uniforms
+      for (let key in uniformLocations) {
+        let uniformLocation = uniformLocations[key]
+        if (key === 'u_worldMatrix') {
+          mat4array.set(worldMatrix.elements)
+          this._gl.uniformMatrix4fv(uniformLocation, false, mat4array)
+        } else if (key === 'u_viewMatrix') {
+          mat4array.set(this.viewMatrix.elements)
+          this._gl.uniformMatrix4fv(uniformLocation, false, mat4array)
+        } else if (key === 'u_projectionMatrix') {
+          mat4array.set(this.projectionMatrix.elements)
+          this._gl.uniformMatrix4fv(uniformLocation, false, mat4array)
+        } else if (key === 'u_color') {
+          let color = mesh.material.colorArray
+          let r = color[0]
+          let g = color[1]
+          let b = color[2]
+          let a = color[3]
+          // this._gl.Uniform4f(uniformLocation, 1.0, 0.0, 0.0, 1.0)
+        }
+      }
+      // draw
+      mesh.vao.bind()
+      this._gl.drawElements(
+        this._gl.TRIANGLES,
+        mesh.indexBuffer.count,
+        this._gl.UNSIGNED_SHORT,
+        0
+      )
+      mesh.vao.unbind()
     }
   }
 }
