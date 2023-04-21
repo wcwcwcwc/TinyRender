@@ -133,10 +133,27 @@ export default class Engine {
       const mesh = this.meshArray[index]
       mesh.updateWorldMatrix()
       let worldMatrix = mesh.worldMatrix
+      let vs_source = basicVS
+      let fs_source = basicFS
+      let material = mesh.material
+      let defines = []
+      // debugger
+      if (material.type === 'PhongMaterial') {
+        defines.push('#define PHONG_MATERIAL')
+      }
+      let headShader_vs = [`#version 300 es`]
+      let headShader_fs = [
+        `#version 300 es
+                          precision highp float;`
+      ]
+      headShader_vs = headShader_vs.concat(defines)
+      headShader_fs = headShader_fs.concat(defines)
+      vs_source = headShader_vs.concat(vs_source).join('\n')
+      fs_source = headShader_fs.concat(fs_source).join('\n')
       mesh.program = new Program({
         gl: this._gl,
-        vs: basicVS,
-        fs: basicFS
+        vs: vs_source,
+        fs: fs_source
       })
 
       let { attributesLocations, uniformLocations } = mesh.program
@@ -181,6 +198,37 @@ export default class Engine {
           let b = color[2]
           let a = color[3]
           this._gl.uniform4f(uniformLocation, r, g, b, a)
+        }
+        // Phong{部分
+        else if (key === 'u_ambientLightStrength' && this.ambientLight) {
+          this._gl.uniform1f(uniformLocation, this.ambientLight.intensity)
+        } else if (key === 'u_lightColor' && this.light) {
+          let color = this.light.colorArray
+          let r = color[0]
+          let g = color[1]
+          let b = color[2]
+          this._gl.uniform3f(uniformLocation, r, g, b)
+        } else if (key === 'u_lightPosition' && this.light) {
+          let lightPosition = this.light.position
+          this._gl.uniform3f(
+            uniformLocation,
+            lightPosition[0],
+            lightPosition[1],
+            lightPosition[2]
+          )
+        } else if (key === 'u_cameraPosition' && this.light) {
+          let cameraPosition = this.camera.position
+          this._gl.uniform3f(
+            uniformLocation,
+            cameraPosition.x,
+            cameraPosition.y,
+            cameraPosition.z
+          )
+        } else if (key === 'u_specularStrength' && this.light) {
+          debugger
+          this._gl.uniform1f(uniformLocation, mesh.material.specularStrength)
+        } else if (key === 'u_shininess' && this.light) {
+          this._gl.uniform1f(uniformLocation, mesh.material.shininess)
         }
       }
       // draw

@@ -15,6 +15,9 @@ export default class PhongMaterial extends Material {
       color: options.color,
       opacity: options.opacity
     })
+    this.type = 'PhongMaterial'
+    this.specularStrength = options.specularStrength || 0.5
+    this.shininess = options.shininess || 32
   }
   setSpecularStrength(strength: number) {
     this.specularStrength = strength

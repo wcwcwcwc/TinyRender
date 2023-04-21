@@ -25,7 +25,8 @@
 <body>
     <canvas id='webglDOM'></canvas>
     <script src="../dist/tinyRender.umd.js"></script>
-    <script>
+    <script type="module">
+        import { GUI } from './utils/dat.gui.module.js';
         // 实例化引擎
         let renderer = new TinyRender.Engine({
             container: 'webglDOM'
@@ -58,7 +59,7 @@
         let cubeMaterial = new TinyRender.PhongMaterial({
             'specularStrength': 0.5,
             'shininess': 32,
-            'color': 'rgba(1.0,0.0,1.0,1.0)',
+            'color': 'rgba(0.76470588,1.0,0.8862745098,1.0)',
             'opacity': 1.0
         })
 
@@ -79,7 +80,7 @@
         let planeMaterial = new TinyRender.PhongMaterial({
             'specularStrength': 0.5,
             'shininess': 32,
-            'color': 'rgba(0.76470588,1.0,0.8862745098,1.0)',
+            'color': 'rgba(1.0,1.0,1.0,1.0)',
             'opacity': 1.0
         })
 
@@ -88,33 +89,70 @@
         renderer.addMesh(planeMesh)
 
         // 灯光设置
+        let lightPosition = [-5, -31, 39]
         let light = new TinyRender.Light({
-            position: [22.381766640001118, 32.76583771179339, 101.12054562126237],
+            position: lightPosition,
             color: 'rgb(1.0,1.0,1.0)',
             intensity: 1
         })
         let ambientLight = new TinyRender.AmbientLight({
             intensity: 0.1
         })
+        // 可视化灯光
+        let lightMesh = new TinyRender.Mesh('cube', {
+            height: 5,
+            width: 5,
+            depth: 5
+        });
+
+        let lightMaterial = new TinyRender.Material({
+            'color': 'rgba(1.0,0.0,1.0,1.0)',
+            'opacity': 1.0
+        })
+        lightMesh.material = lightMaterial;
+        lightMesh.setPosition(lightPosition)
+
+        renderer.addMesh(lightMesh)
         // 添加环境光
         renderer.addAmbientLight(ambientLight);
         // 添加点光源
         renderer.addLight(light);
 
+        // gui
+        const effectController = {
+            LightPosition_X: 63.14194837127275,
+            LightPosition_Y: -24.90426787498173,
+            LightPosition_Z: 84.8102596571634,
+        };
 
+        function initGUI() {
 
+            const gui = new GUI();
 
+            gui.add(effectController, "LightPosition_X").onChange(function (value) {
+                if(renderer.light){
+                    lightPosition[0] = value;
+                    renderer.light.position[0] = value;
+                    lightMesh.setPosition(lightPosition)
+                }
+            });
+            gui.add(effectController, "LightPosition_Y").onChange(function (value) {
+                if(renderer.light){
+                    lightPosition[1] = value;
+                    renderer.light.position[1] = value;
+                    lightMesh.setPosition(lightPosition)
+                }
+            });
+            gui.add(effectController, "LightPosition_Z").onChange(function (value) {
+                if(renderer.light){
+                    lightPosition[2] = value;
+                    renderer.light.position[2] = value;
+                    lightMesh.setPosition(lightPosition)
+                }
+            });
 
-
-
-
-
-
-
-
-
-
-
+        }
+        initGUI();
 
 
         function animate() {

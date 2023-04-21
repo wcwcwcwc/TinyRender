@@ -1,4 +1,5 @@
 import Material from './Material'
+import PhongMaterial from './PhongMaterial'
 import { Vector3 } from '../math/Vector3'
 import { Matrix4 } from '../math/Matrix4'
 import { Euler } from '../math/Euler'
@@ -19,7 +20,7 @@ export default class Mesh {
   public type: string
   public options: any
   public position: Vector3
-  public material: Material
+  public material: any
   public indices: Array<number> = []
   public vertices: Array<number> = []
   public normals: Array<number> = []
