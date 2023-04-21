@@ -55,10 +55,15 @@
         //     'color': 'rgba(1.0,0.0,1.0,1.0)',
         //     'opacity': 1.0
         // })
-
-        let cubeMaterial = new TinyRender.PhongMaterial({
+        let lightOptions={
+            'ambientIntensity':0.1,
             'specularStrength': 0.5,
             'shininess': 32,
+        }
+
+        let cubeMaterial = new TinyRender.PhongMaterial({
+            'specularStrength': lightOptions.specularStrength,
+            'shininess': lightOptions.shininess,
             'color': 'rgba(0.76470588,1.0,0.8862745098,1.0)',
             'opacity': 1.0
         })
@@ -78,8 +83,8 @@
         // })
 
         let planeMaterial = new TinyRender.PhongMaterial({
-            'specularStrength': 0.5,
-            'shininess': 32,
+            'specularStrength': lightOptions.specularStrength,
+            'shininess': lightOptions.shininess,
             'color': 'rgba(1.0,1.0,1.0,1.0)',
             'opacity': 1.0
         })
@@ -96,7 +101,7 @@
             intensity: 1
         })
         let ambientLight = new TinyRender.AmbientLight({
-            intensity: 0.1
+            intensity: lightOptions.ambientIntensity
         })
         // 可视化灯光
         let lightMesh = new TinyRender.Mesh('cube', {
@@ -123,6 +128,9 @@
             LightPosition_X: 63.14194837127275,
             LightPosition_Y: -24.90426787498173,
             LightPosition_Z: 84.8102596571634,
+            ambientIntensity:lightOptions.ambientIntensity,
+            specularStrength:lightOptions.specularStrength,
+            shininess:lightOptions.shininess
         };
 
         function initGUI() {
@@ -148,6 +156,23 @@
                     lightPosition[2] = value;
                     renderer.light.position[2] = value;
                     lightMesh.setPosition(lightPosition)
+                }
+            });
+            gui.add(effectController, "ambientIntensity").onChange(function (value) {
+                if(renderer.light){
+                    ambientLight.setIntensity(value)
+                }
+            });
+            gui.add(effectController, "specularStrength").onChange(function (value) {
+                if(renderer.light){
+                    cubeMaterial.setSpecularStrength(value);
+                    planeMaterial.setSpecularStrength(value);
+                }
+            });
+            gui.add(effectController, "shininess").onChange(function (value) {
+                if(renderer.light){
+                    cubeMaterial.setShininess(value);
+                    planeMaterial.setShininess(value);
                 }
             });
 

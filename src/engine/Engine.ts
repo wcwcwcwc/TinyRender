@@ -225,7 +225,6 @@ export default class Engine {
             cameraPosition.z
           )
         } else if (key === 'u_specularStrength' && this.light) {
-          debugger
           this._gl.uniform1f(uniformLocation, mesh.material.specularStrength)
         } else if (key === 'u_shininess' && this.light) {
           this._gl.uniform1f(uniformLocation, mesh.material.shininess)

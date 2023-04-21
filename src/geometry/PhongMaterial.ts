@@ -1,4 +1,5 @@
 import Material from './Material'
+import { clamp } from '../math/Common'
 interface PhongMaterialOptions {
   specularStrength: number
   shininess: number
@@ -20,7 +21,7 @@ export default class PhongMaterial extends Material {
     this.shininess = options.shininess || 32
   }
   setSpecularStrength(strength: number) {
-    this.specularStrength = strength
+    this.specularStrength = clamp(strength, 0, 1)
   }
   setShininess(shininess: number) {
     this.shininess = shininess
