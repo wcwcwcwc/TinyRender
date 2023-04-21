@@ -3,11 +3,17 @@ import Geometry from './geometry/Geometry'
 import Material from './geometry/Material'
 import Mesh from './geometry/Mesh'
 import PerspectiveCamera from './camera/PerspectiveCamera'
+import Light from './light/Light'
+import PhongMaterial from './geometry/PhongMaterial'
+import AmbientLight from './light/AmbientLight'
 
 export default {
   Engine,
   Geometry,
   Material,
   Mesh,
-  PerspectiveCamera
+  PerspectiveCamera,
+  Light,
+  PhongMaterial,
+  AmbientLight
 }

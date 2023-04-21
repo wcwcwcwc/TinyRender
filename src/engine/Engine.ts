@@ -16,6 +16,9 @@ import {
   VertexArrayObject
 } from '../webgl/VertexArrayObject'
 
+import AmbientLight from '../light/AmbientLight'
+import Light from '../light/Light'
+
 type Nullable<T> = T | null
 // render构造函数参数接口
 interface IRenderOptions {
@@ -35,6 +38,8 @@ export default class Engine {
   public projectionMatrix: Matrix4
   public projectionMatrixInverse: Matrix4
   public viewMatrix: Matrix4
+  public ambientLight: AmbientLight
+  public light: Light
   constructor(options: IRenderOptions) {
     this.container = options.container
     this.setup()
@@ -101,6 +106,15 @@ export default class Engine {
   // 添加mesh
   addMesh(mesh: Mesh) {
     this.meshArray.push(mesh)
+  }
+
+  addAmbientLight(ambientLight: AmbientLight) {
+    this.ambientLight = ambientLight
+  }
+
+  addLight(light: Light) {
+    // TODO 多光源
+    this.light = light
   }
 
   /**渲染

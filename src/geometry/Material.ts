@@ -1,3 +1,4 @@
+import { rgbaToArray } from '../math/Common'
 export default class Material {
   public color: any
   public opacity: number
@@ -6,13 +7,10 @@ export default class Material {
     const { color, opacity } = options
     this.color = color
     this.opacity = opacity
-    this.rgbaToArray()
+    this.colorArray = rgbaToArray(this.color)
   }
-  rgbaToArray() {
-    this.colorArray = this.color
-      .split('(')[1]
-      .split(')')[0]
-      .split(',')
-      .map((item: any) => Number(item))
+  setColor(color: string) {
+    this.color = color
+    this.colorArray = rgbaToArray(this.color)
   }
 }
