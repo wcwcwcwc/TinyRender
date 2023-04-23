@@ -95,7 +95,7 @@
 
         // 灯光设置
         let lightPosition = [-5, -31, 39]
-        let light = new TinyRender.Light({
+        let light = new TinyRender.SpotLight({
             position: lightPosition,
             color: 'rgb(1.0,1.0,1.0)',
             intensity: 1
@@ -122,6 +122,8 @@
         renderer.addAmbientLight(ambientLight);
         // 添加点光源
         renderer.addLight(light);
+
+        renderer.addShadow(true, {})
 
         // gui
         const effectController = {

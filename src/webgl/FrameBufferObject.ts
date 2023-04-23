@@ -69,7 +69,7 @@ export default class FrameBufferObject {
     gl.texImage2D(
       gl.TEXTURE_2D,
       0,
-      gl.DEPTH_COMPONENT,
+      gl.DEPTH_COMPONENT16,
       this.width,
       this.height,
       0,

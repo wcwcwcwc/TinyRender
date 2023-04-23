@@ -6,6 +6,7 @@ import PerspectiveCamera from './camera/PerspectiveCamera'
 import Light from './light/Light'
 import PhongMaterial from './geometry/PhongMaterial'
 import AmbientLight from './light/AmbientLight'
+import SpotLight from './light/SpotLight'
 
 export default {
   Engine,
@@ -15,5 +16,6 @@ export default {
   PerspectiveCamera,
   Light,
   PhongMaterial,
-  AmbientLight
+  AmbientLight,
+  SpotLight
 }

@@ -4,12 +4,17 @@ import Program from '../webgl/Program'
 import basicFS from '../webgl/shaders/basicFS.glsl'
 //@ts-ignore
 import basicVS from '../webgl/shaders/basicVS.glsl'
+//@ts-ignore
+import depthFS from '../webgl/shaders/depthFS.glsl'
+//@ts-ignore
+import depthVS from '../webgl/shaders/depthVS.glsl'
 export default class Material {
   public type: string
   public color: any
   public opacity: number
   public colorArray: number[]
   public program: Program
+  public depthProgram: Program
   public defines: string[]
   constructor(options: any) {
     const { color, opacity } = options
@@ -30,7 +35,7 @@ export default class Material {
     let headShader_vs = [`#version 300 es`]
     let headShader_fs = [
       `#version 300 es
-                        precision highp float;`
+       precision highp float;`
     ]
     headShader_vs = headShader_vs.concat(this.defines)
     headShader_fs = headShader_fs.concat(this.defines)
@@ -64,5 +69,26 @@ export default class Material {
     let b = color[2]
     let a = color[3]
     gl.uniform4f(uniformLocations['u_color'], r, g, b, a)
+  }
+
+  initDepthProgram(gl: any) {
+    if (!this.depthProgram) {
+      let vs_source = depthVS
+      let fs_source = depthFS
+      let headShader_vs = [`#version 300 es`]
+      let headShader_fs = [
+        `#version 300 es
+         precision highp float;`
+      ]
+      headShader_vs = headShader_vs.concat(this.defines)
+      headShader_fs = headShader_fs.concat(this.defines)
+      vs_source = headShader_vs.concat(vs_source).join('\n')
+      fs_source = headShader_fs.concat(fs_source).join('\n')
+      this.depthProgram = new Program({
+        gl,
+        vs: vs_source,
+        fs: fs_source
+      })
+    }
   }
 }

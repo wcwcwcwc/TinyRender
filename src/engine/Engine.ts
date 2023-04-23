@@ -3,13 +3,6 @@ import PerspectiveCamera, {
 } from '../camera/PerspectiveCamera'
 import Mesh from '../geometry/Mesh'
 import { Matrix4 } from '../math/Matrix4'
-import { Vector3 } from '../math/Vector3'
-import Program from '../webgl/Program'
-//@ts-ignore
-import basicFS from '../webgl/shaders/basicFS.glsl'
-//@ts-ignore
-import basicVS from '../webgl/shaders/basicVS.glsl'
-
 import {
   VertexBuffer,
   IndexBuffer,
@@ -18,6 +11,7 @@ import {
 
 import AmbientLight from '../light/AmbientLight'
 import Light from '../light/Light'
+import ShadowMapComponent from '../light/shadows/ShadowMapComponent'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -40,6 +34,10 @@ export default class Engine {
   public viewMatrix: Matrix4
   public ambientLight: AmbientLight
   public light: Light
+  public lightViewMatrix: Matrix4
+  public lightProjectionMatrix: Matrix4
+  public isShowShadow: boolean = false
+  public shadowMapComponent: ShadowMapComponent
   constructor(options: IRenderOptions) {
     this.container = options.container
     this.setup()
@@ -127,6 +125,23 @@ export default class Engine {
     this.light = light
   }
 
+  /**
+   *
+   * @param isShowShadow 是否显示阴影
+   * @param shadowOptions 阴影相关参数
+   */
+  addShadow(isShowShadow: boolean, shadowOptions: any) {
+    if (isShowShadow) {
+      this.isShowShadow = isShowShadow
+      this.shadowMapComponent = new ShadowMapComponent(
+        this._gl,
+        this.width,
+        this.height,
+        shadowOptions
+      )
+    }
+  }
+
   /**渲染
    * mvp矩阵计算
    * attributes
@@ -138,7 +153,11 @@ export default class Engine {
     this.projectionMatrix = this.camera.camera.projectionMatrix
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
     this.viewMatrix = this.camera.setViewMatrix()
-
+    this.lightViewMatrix = this.light.setViewMatrix()
+    this.lightProjectionMatrix = this.projectionMatrix // 默认点光源采用和相机一样的透视投影矩阵
+    this.draw()
+  }
+  draw() {
     for (let index = 0; index < this.meshArray.length; index++) {
       const mesh = this.meshArray[index]
       mesh.updateWorldMatrix()
@@ -146,7 +165,7 @@ export default class Engine {
       let program = material.program
       if (!program) continue
 
-      let { attributesLocations, uniformLocations } = program
+      let { attributesLocations } = program
       let attributes = mesh.attributes
       // TODO
       // render前完成bufferData
