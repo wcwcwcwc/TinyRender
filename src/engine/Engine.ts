@@ -110,6 +110,11 @@ export default class Engine {
   }
   // 添加mesh
   addMesh(mesh: Mesh) {
+    // program初始化完成
+    // vao的绑定
+    if (mesh.material) {
+      mesh.material.initProgram(this._gl)
+    }
     this.meshArray.push(mesh)
   }
 
@@ -137,31 +142,11 @@ export default class Engine {
     for (let index = 0; index < this.meshArray.length; index++) {
       const mesh = this.meshArray[index]
       mesh.updateWorldMatrix()
-      let worldMatrix = mesh.worldMatrix
-      let vs_source = basicVS
-      let fs_source = basicFS
       let material = mesh.material
-      let defines = []
-      // debugger
-      if (material.type === 'PhongMaterial') {
-        defines.push('#define PHONG_MATERIAL')
-      }
-      let headShader_vs = [`#version 300 es`]
-      let headShader_fs = [
-        `#version 300 es
-                          precision highp float;`
-      ]
-      headShader_vs = headShader_vs.concat(defines)
-      headShader_fs = headShader_fs.concat(defines)
-      vs_source = headShader_vs.concat(vs_source).join('\n')
-      fs_source = headShader_fs.concat(fs_source).join('\n')
-      mesh.program = new Program({
-        gl: this._gl,
-        vs: vs_source,
-        fs: fs_source
-      })
+      let program = material.program
+      if (!program) continue
 
-      let { attributesLocations, uniformLocations } = mesh.program
+      let { attributesLocations, uniformLocations } = program
       let attributes = mesh.attributes
       // TODO
       // render前完成bufferData
@@ -180,61 +165,13 @@ export default class Engine {
         }
       }
       mesh.indexBuffer = new IndexBuffer(this._gl, mesh.index, false)
-      this._gl.useProgram(mesh.program.program)
+      this._gl.useProgram(program.program)
       mesh.vao = new VertexArrayObject(this._gl)
       mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
-      const mat4array = new Float32Array(16)
-      // uniforms
-      for (let key in uniformLocations) {
-        let uniformLocation = uniformLocations[key]
-        if (key === 'u_worldMatrix') {
-          mat4array.set(worldMatrix.elements)
-          this._gl.uniformMatrix4fv(uniformLocation, false, mat4array)
-        } else if (key === 'u_viewMatrix') {
-          mat4array.set(this.viewMatrix.elements)
-          this._gl.uniformMatrix4fv(uniformLocation, false, mat4array)
-        } else if (key === 'u_projectionMatrix') {
-          mat4array.set(this.projectionMatrix.elements)
-          this._gl.uniformMatrix4fv(uniformLocation, false, mat4array)
-        } else if (key === 'u_color') {
-          let color = mesh.material.colorArray
-          let r = color[0]
-          let g = color[1]
-          let b = color[2]
-          let a = color[3]
-          this._gl.uniform4f(uniformLocation, r, g, b, a)
-        }
-        // Phong{部分
-        else if (key === 'u_ambientLightStrength' && this.ambientLight) {
-          this._gl.uniform1f(uniformLocation, this.ambientLight.intensity)
-        } else if (key === 'u_lightColor' && this.light) {
-          let color = this.light.colorArray
-          let r = color[0]
-          let g = color[1]
-          let b = color[2]
-          this._gl.uniform3f(uniformLocation, r, g, b)
-        } else if (key === 'u_lightPosition' && this.light) {
-          let lightPosition = this.light.position
-          this._gl.uniform3f(
-            uniformLocation,
-            lightPosition[0],
-            lightPosition[1],
-            lightPosition[2]
-          )
-        } else if (key === 'u_cameraPosition' && this.light) {
-          let cameraPosition = this.camera.position
-          this._gl.uniform3f(
-            uniformLocation,
-            cameraPosition.x,
-            cameraPosition.y,
-            cameraPosition.z
-          )
-        } else if (key === 'u_specularStrength' && this.light) {
-          this._gl.uniform1f(uniformLocation, mesh.material.specularStrength)
-        } else if (key === 'u_shininess' && this.light) {
-          this._gl.uniform1f(uniformLocation, mesh.material.shininess)
-        }
-      }
+
+      // 绑定uniform
+      material.bindUniform(this, mesh)
+
       // draw
       mesh.vao.bind()
       this._gl.enable(this._gl.DEPTH_TEST)
