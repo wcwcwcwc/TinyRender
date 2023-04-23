@@ -28,7 +28,11 @@ void main() {
     // specular部分
     vec3 viewDir = normalize(u_cameraPosition - v_worldPosition);
     vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_shininess);
+    vec3 halfwayDir = normalize(lightDir + viewDir);  
+    // blinn-phong
+    float spec = pow(max(dot(normal, halfwayDir), 0.0), u_shininess); 
+    // phong
+    // float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_shininess);
     vec3 specular = u_specularStrength * spec * u_lightColor;
 
     resultColor = vec4((ambient + diffuse + specular) * objectColor.rgb,objectColor.a);

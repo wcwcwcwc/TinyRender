@@ -48,11 +48,16 @@ export default class Engine {
     this.canvas.width = this.width
     this.canvas.height = this.height
     this.resize()
+    this.setExtension()
   }
 
   // 屏幕像素比
   get devicePixelRatio() {
     return window.devicePixelRatio
+  }
+
+  setExtension() {
+    this._gl.getExtension('WEBGL_depth_texture')
   }
 
   // 初始化gl
