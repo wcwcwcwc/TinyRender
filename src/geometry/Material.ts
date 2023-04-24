@@ -4,10 +4,7 @@ import Program from '../webgl/Program'
 import basicFS from '../webgl/shaders/basicFS.glsl'
 //@ts-ignore
 import basicVS from '../webgl/shaders/basicVS.glsl'
-//@ts-ignore
-import depthFS from '../webgl/shaders/depthFS.glsl'
-//@ts-ignore
-import depthVS from '../webgl/shaders/depthVS.glsl'
+
 export default class Material {
   public type: string
   public color: any
@@ -16,11 +13,13 @@ export default class Material {
   public program: Program
   public depthProgram: Program
   public defines: string[]
+  public isReceiveShadow: true
   constructor(options: any) {
-    const { color, opacity } = options
+    const { color, opacity, isReceiveShadow } = options
     this.type = 'Material'
     this.color = color
     this.opacity = opacity
+    this.isReceiveShadow = true
     this.colorArray = rgbaToArray(this.color)
     this.defines = []
   }
@@ -28,24 +27,33 @@ export default class Material {
     this.color = color
     this.colorArray = rgbaToArray(this.color)
   }
+  // render完成，收集依赖，建立缓存
+  initProgram(gl: any, engine: any) {
+    if (!this.program) {
+      let vs_source = basicVS
+      let fs_source = basicFS
+      let headShader_vs = [`#version 300 es`]
+      let headShader_fs = [
+        `#version 300 es
+         precision highp float;`
+      ]
 
-  initProgram(gl: any) {
-    let vs_source = basicVS
-    let fs_source = basicFS
-    let headShader_vs = [`#version 300 es`]
-    let headShader_fs = [
-      `#version 300 es
-       precision highp float;`
-    ]
-    headShader_vs = headShader_vs.concat(this.defines)
-    headShader_fs = headShader_fs.concat(this.defines)
-    vs_source = headShader_vs.concat(vs_source).join('\n')
-    fs_source = headShader_fs.concat(fs_source).join('\n')
-    this.program = new Program({
-      gl,
-      vs: vs_source,
-      fs: fs_source
-    })
+      // 全局效果的define依赖收集
+      // 是否启用shadowMap
+      if (engine.isShowShadow && this.isReceiveShadow) {
+        this.defines.push('#define SHADOW_MAP')
+      }
+
+      headShader_vs = headShader_vs.concat(this.defines)
+      headShader_fs = headShader_fs.concat(this.defines)
+      vs_source = headShader_vs.concat(vs_source).join('\n')
+      fs_source = headShader_fs.concat(fs_source).join('\n')
+      this.program = new Program({
+        gl,
+        vs: vs_source,
+        fs: fs_source
+      })
+    }
   }
   bindUniform(engine: any, mesh: any) {
     // base_Uniform + material_uniform
@@ -69,26 +77,5 @@ export default class Material {
     let b = color[2]
     let a = color[3]
     gl.uniform4f(uniformLocations['u_color'], r, g, b, a)
-  }
-
-  initDepthProgram(gl: any) {
-    if (!this.depthProgram) {
-      let vs_source = depthVS
-      let fs_source = depthFS
-      let headShader_vs = [`#version 300 es`]
-      let headShader_fs = [
-        `#version 300 es
-         precision highp float;`
-      ]
-      headShader_vs = headShader_vs.concat(this.defines)
-      headShader_fs = headShader_fs.concat(this.defines)
-      vs_source = headShader_vs.concat(vs_source).join('\n')
-      fs_source = headShader_fs.concat(fs_source).join('\n')
-      this.depthProgram = new Program({
-        gl,
-        vs: vs_source,
-        fs: fs_source
-      })
-    }
   }
 }

@@ -39,6 +39,12 @@ export default class Program {
 
     gl.linkProgram(this.program)
 
+    // add this for extra debugging
+    if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+      var info = gl.getProgramInfoLog(this.program)
+      throw new Error('Could not compile WebGL program. \n\n' + info)
+    }
+
     // 绑定attributes
     this.bindAttributeLocations()
     // 绑定uniform

@@ -36,6 +36,7 @@ export default class Mesh {
   public quaternion: Quaternion
   public rotation: Euler
   public scale: Vector3
+  public userData: any
   constructor(type: string, options: any) {
     this.type = type
     this.options = options
@@ -49,6 +50,7 @@ export default class Mesh {
     this.quaternion = new Quaternion()
     this.scale = new Vector3(1, 1, 1)
     this.setUp()
+    this.userData = {}
   }
 
   setUp() {

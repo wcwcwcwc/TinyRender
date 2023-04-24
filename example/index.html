@@ -70,11 +70,11 @@
 
         // 添加材质
         cubeMesh.material = cubeMaterial;
-        renderer.addMesh(cubeMesh)
+       
 
         let planeMesh = new TinyRender.Mesh('plane', {
-            width: 150,
-            height: 150
+            width: 3000,
+            height: 3000
         })
         planeMesh.setPosition([0, 0, 0]);
         // let planeMaterial = new TinyRender.Material({
@@ -92,6 +92,7 @@
         // 添加材质
         planeMesh.material = planeMaterial;
         renderer.addMesh(planeMesh)
+        renderer.addMesh(cubeMesh)
 
         // 灯光设置
         let lightPosition = [-5, -31, 39]
@@ -112,10 +113,13 @@
 
         let lightMaterial = new TinyRender.Material({
             'color': 'rgba(1.0,0.0,1.0,1.0)',
-            'opacity': 1.0
+            'opacity': 1.0,
+            'isReceiveShadow':false
         })
+        lightMaterial.isReceiveShadow = false;
         lightMesh.material = lightMaterial;
         lightMesh.setPosition(lightPosition)
+        lightMesh.userData['isLight'] = true
 
         renderer.addMesh(lightMesh)
         // 添加环境光

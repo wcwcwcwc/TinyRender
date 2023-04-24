@@ -1,4 +1,5 @@
 
+// #define SHADOW_MAP
 uniform vec4 u_color;
 
 uniform float u_ambientLightStrength;
@@ -9,15 +10,45 @@ uniform float u_specularStrength;
 uniform float u_shininess;
 
 
+
+
 in vec3 v_worldPosition;
 in vec3 v_normal;
 
+#ifdef SHADOW_MAP
+  uniform sampler2D u_shadowMapDepth;
+  in vec4 v_positionFromLight;
+#endif
+
 out vec4 outColor;
 
+#ifdef SHADOW_MAP
+  float ShadowCalculation(vec4 positionFromLight){
+    vec3 positionW = positionFromLight.xyz / positionFromLight.w;
+    vec3 positionNDC = positionW * 0.5 + 0.5;
+    float currentDepth = positionNDC.z;
+    float cloestDepthInMap = texture(u_shadowMapDepth, positionNDC.xy).r;
+    float shadow = currentDepth > cloestDepthInMap  ? 0.0 : 1.0;   
+    if(currentDepth > 1.0 || positionNDC.x < 0.0 || positionNDC.x > 1.0 || positionNDC.y < 0.0 || positionNDC.y > 1.0){
+      shadow = 1.0;
+    }
+    return shadow;
+  }
+#endif
+
 void main() {
+
   vec4 objectColor = u_color;
   vec4 resultColor = objectColor;
-   #ifdef PHONG_MATERIAL
+  float shadow = 1.0;
+
+  #ifdef SHADOW_MAP
+    shadow = ShadowCalculation(v_positionFromLight);
+  #endif
+
+  resultColor.rgb = resultColor.rgb * shadow;
+
+  #ifdef PHONG_MATERIAL
     // 环境光部分
     vec3 ambient = u_ambientLightStrength * u_lightColor;
     // diffuse部分
@@ -34,9 +65,8 @@ void main() {
     // phong
     // float spec = pow(max(dot(viewDir, reflectDir), 0.0), u_shininess);
     vec3 specular = u_specularStrength * spec * u_lightColor;
-
-    resultColor = vec4((ambient + diffuse + specular) * objectColor.rgb,objectColor.a);
-   #endif
+    resultColor.rgb = (ambient + (diffuse + specular) * shadow ) * objectColor.rgb;
+  #endif
 
   outColor = resultColor;
 }

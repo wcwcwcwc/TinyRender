@@ -26,9 +26,9 @@ export default class PhongMaterial extends Material {
   setShininess(shininess: number) {
     this.shininess = shininess
   }
-  initProgram(gl: any) {
-    this.defines.push('#define PHONG_MATERIAL')
-    super.initProgram(gl)
+  initProgram(gl: any, engine: any) {
+    this.defines = ['#define PHONG_MATERIAL']
+    super.initProgram(gl, engine)
   }
   bindUniform(engine: any, mesh: any) {
     super.bindUniform(engine, mesh)

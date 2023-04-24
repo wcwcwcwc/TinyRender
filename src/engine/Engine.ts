@@ -12,6 +12,7 @@ import {
 import AmbientLight from '../light/AmbientLight'
 import Light from '../light/Light'
 import ShadowMapComponent from '../light/shadows/ShadowMapComponent'
+import _ from 'lodash'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -38,6 +39,7 @@ export default class Engine {
   public lightProjectionMatrix: Matrix4
   public isShowShadow: boolean = false
   public shadowMapComponent: ShadowMapComponent
+
   constructor(options: IRenderOptions) {
     this.container = options.container
     this.setup()
@@ -54,9 +56,7 @@ export default class Engine {
     return window.devicePixelRatio
   }
 
-  setExtension() {
-    this._gl.getExtension('WEBGL_depth_texture')
-  }
+  setExtension() {}
 
   // 初始化gl
   setup() {
@@ -110,9 +110,9 @@ export default class Engine {
   addMesh(mesh: Mesh) {
     // program初始化完成
     // vao的绑定
-    if (mesh.material) {
-      mesh.material.initProgram(this._gl)
-    }
+    // if (mesh.material) {
+    //   mesh.material.initProgram(this._gl)
+    // }
     this.meshArray.push(mesh)
   }
 
@@ -139,6 +139,7 @@ export default class Engine {
         this.height,
         shadowOptions
       )
+      // this.shadowMapComponent.material.initProgram(this._gl, this);
     }
   }
 
@@ -155,17 +156,45 @@ export default class Engine {
     this.viewMatrix = this.camera.setViewMatrix()
     this.lightViewMatrix = this.light.setViewMatrix()
     this.lightProjectionMatrix = this.projectionMatrix // 默认点光源采用和相机一样的透视投影矩阵
+    if (this.isShowShadow) {
+      //bindFBO....
+      this.shadowMapComponent.fbo.setCurrentFrameBufferObject()
+      this.resize()
+      this.shadowMapComponent.pass = 1
+      this.draw()
+      this.shadowMapComponent.pass = 2
+      this.shadowMapComponent.fbo.setNullFrameBufferObject()
+      this.resize()
+    }
     this.draw()
   }
   draw() {
     for (let index = 0; index < this.meshArray.length; index++) {
       const mesh = this.meshArray[index]
       mesh.updateWorldMatrix()
-      let material = mesh.material
+      let material
+
+      if (
+        this.isShowShadow &&
+        this.shadowMapComponent.pass === 1 &&
+        mesh.userData &&
+        mesh.userData['isLight']
+      ) {
+        continue
+      }
+
+      if (this.isShowShadow && this.shadowMapComponent.pass === 1) {
+        material = this.shadowMapComponent.material
+        this.shadowMapComponent.material.initProgram(this._gl, this)
+      } else {
+        material = mesh.material
+        material.initProgram(this._gl, this)
+      }
+
       let program = material.program
       if (!program) continue
 
-      let { attributesLocations } = program
+      let { attributesLocations, uniformLocations } = program
       let attributes = mesh.attributes
       // TODO
       // render前完成bufferData
@@ -190,6 +219,13 @@ export default class Engine {
 
       // 绑定uniform
       material.bindUniform(this, mesh)
+
+      if (this.isShowShadow && this.shadowMapComponent.pass === 2) {
+        this.shadowMapComponent.material.bindShadowMapUniform(
+          this,
+          uniformLocations
+        )
+      }
 
       // draw
       mesh.vao.bind()
