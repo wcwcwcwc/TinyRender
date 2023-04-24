@@ -17,6 +17,7 @@ export default class ShadowMapMaterial extends Material {
     })
     this.fbo = new FrameBufferObject({ gl, width, height })
   }
+  // 第一次pass的program
   initProgram(gl: any, engine: any) {
     if (!this.program) {
       let vs_source = depthVS

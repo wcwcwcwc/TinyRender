@@ -1,5 +1,4 @@
 
-// #define SHADOW_MAP
 in vec3 a_position;
 in vec3 a_normal;
 

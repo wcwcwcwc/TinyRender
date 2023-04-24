@@ -108,11 +108,6 @@ export default class Engine {
   }
   // 添加mesh
   addMesh(mesh: Mesh) {
-    // program初始化完成
-    // vao的绑定
-    // if (mesh.material) {
-    //   mesh.material.initProgram(this._gl)
-    // }
     this.meshArray.push(mesh)
   }
 
@@ -139,7 +134,6 @@ export default class Engine {
         this.height,
         shadowOptions
       )
-      // this.shadowMapComponent.material.initProgram(this._gl, this);
     }
   }
 
@@ -182,7 +176,7 @@ export default class Engine {
       ) {
         continue
       }
-
+      // shadowMap：第一次pass，走shadowMapMaterial
       if (this.isShowShadow && this.shadowMapComponent.pass === 1) {
         material = this.shadowMapComponent.material
         this.shadowMapComponent.material.initProgram(this._gl, this)
@@ -217,9 +211,13 @@ export default class Engine {
       mesh.vao = new VertexArrayObject(this._gl)
       mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
 
-      // 绑定uniform
+      // uniform = base_uniform + material_uniform + effect_uniform
+      // base_uniform: 通用uniform,在基类material完成，包括了如MVP、color在内的通用uniform
+      // material_uniform: 材质类uniform，在子类material完成，如phong材质中的specularStrength、shininess等
+      // effect_uniform: 效果类uniform，在效果子类material完成，如shadowMap中的lightMatrix等
+      // 绑定uniform：base_uniform + material_uniform
       material.bindUniform(this, mesh)
-
+      // 效果类uniform绑定：shadowMap
       if (this.isShowShadow && this.shadowMapComponent.pass === 2) {
         this.shadowMapComponent.material.bindShadowMapUniform(
           this,
