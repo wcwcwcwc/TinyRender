@@ -55,8 +55,8 @@
         //     'color': 'rgba(1.0,0.0,1.0,1.0)',
         //     'opacity': 1.0
         // })
-        let lightOptions={
-            'ambientIntensity':0.1,
+        let lightOptions = {
+            'ambientIntensity': 0.1,
             'specularStrength': 0.5,
             'shininess': 32,
         }
@@ -70,7 +70,7 @@
 
         // 添加材质
         cubeMesh.material = cubeMaterial;
-       
+
 
         let planeMesh = new TinyRender.Mesh('plane', {
             width: 3000,
@@ -96,10 +96,22 @@
 
         // 灯光设置
         let lightPosition = [-5, -31, 39]
-        let light = new TinyRender.SpotLight({
+        let light = new TinyRender.DirectionLight({
             position: lightPosition,
             color: 'rgb(1.0,1.0,1.0)',
-            intensity: 1
+            intensity: 1,
+            // 灯光矩阵计算需要
+            // fov: 75,
+            // aspect: window.innerWidth / window.innerHeight,
+            // nearZ: 0.01,
+            // farZ: 1000
+
+            left: - 500,
+            right: 500,
+            top: 500,
+            bottom: - 500,
+            near: - 500,
+            far: 500
         })
         let ambientLight = new TinyRender.AmbientLight({
             intensity: lightOptions.ambientIntensity
@@ -114,7 +126,7 @@
         let lightMaterial = new TinyRender.Material({
             'color': 'rgba(1.0,0.0,1.0,1.0)',
             'opacity': 1.0,
-            'isReceiveShadow':false
+            'isReceiveShadow': false
         })
         lightMaterial.isReceiveShadow = false;
         lightMesh.material = lightMaterial;
@@ -134,9 +146,9 @@
             LightPosition_X: 63.14194837127275,
             LightPosition_Y: -24.90426787498173,
             LightPosition_Z: 84.8102596571634,
-            ambientIntensity:lightOptions.ambientIntensity,
-            specularStrength:lightOptions.specularStrength,
-            shininess:lightOptions.shininess
+            ambientIntensity: lightOptions.ambientIntensity,
+            specularStrength: lightOptions.specularStrength,
+            shininess: lightOptions.shininess
         };
 
         function initGUI() {
@@ -144,39 +156,39 @@
             const gui = new GUI();
 
             gui.add(effectController, "LightPosition_X").onChange(function (value) {
-                if(renderer.light){
+                if (renderer.light) {
                     lightPosition[0] = value;
                     renderer.light.position[0] = value;
                     lightMesh.setPosition(lightPosition)
                 }
             });
             gui.add(effectController, "LightPosition_Y").onChange(function (value) {
-                if(renderer.light){
+                if (renderer.light) {
                     lightPosition[1] = value;
                     renderer.light.position[1] = value;
                     lightMesh.setPosition(lightPosition)
                 }
             });
             gui.add(effectController, "LightPosition_Z").onChange(function (value) {
-                if(renderer.light){
+                if (renderer.light) {
                     lightPosition[2] = value;
                     renderer.light.position[2] = value;
                     lightMesh.setPosition(lightPosition)
                 }
             });
             gui.add(effectController, "ambientIntensity").onChange(function (value) {
-                if(renderer.light){
+                if (renderer.light) {
                     ambientLight.setIntensity(value)
                 }
             });
             gui.add(effectController, "specularStrength").onChange(function (value) {
-                if(renderer.light){
+                if (renderer.light) {
                     cubeMaterial.setSpecularStrength(value);
                     planeMaterial.setSpecularStrength(value);
                 }
             });
             gui.add(effectController, "shininess").onChange(function (value) {
-                if(renderer.light){
+                if (renderer.light) {
                     cubeMaterial.setShininess(value);
                     planeMaterial.setShininess(value);
                 }

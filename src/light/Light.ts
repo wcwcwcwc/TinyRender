@@ -26,6 +26,7 @@ export default class Light {
   public quaternion: Quaternion
   public lookAt: number[]
   public scale: any
+  public projectionMatrix: Matrix4
   constructor(options: LightOptions) {
     this.position = options.position
     this.color = options.color
@@ -68,5 +69,8 @@ export default class Light {
     this.viewMatrix.compose(lightPosition, this.quaternion, this.scale)
     this.viewMatrix.invert()
     return this.viewMatrix
+  }
+  getProjectionMatrix() {
+    return this.projectionMatrix
   }
 }

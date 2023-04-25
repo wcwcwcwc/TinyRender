@@ -4,17 +4,19 @@ import { Vector3 } from '../math/Vector3'
 import { Euler } from '../math/Euler'
 import { Quaternion } from '../math/Quaternion'
 
-interface SpotLightOptions {
+interface DirectionOptions {
   position: number[]
   color: string
   intensity: number
-  fov: number
-  aspect: number
-  nearZ: number
-  farZ: number
+  left: number
+  right: number
+  top: number
+  bottom: number
+  near: number
+  far: number
 }
 
-export default class SpotLight extends Light {
+export default class DirectionLight extends Light {
   public viewMatrix: any
   public viewMatrixInverse: any
   public target: any
@@ -25,42 +27,50 @@ export default class SpotLight extends Light {
   public scale: any
   public type: string
   public projectionMatrix: Matrix4
-  public fov: number
-  public aspect: number
-  public nearZ: number
-  public farZ: number
-  constructor(options: SpotLightOptions) {
+  left: number
+  right: number
+  top: number
+  bottom: number
+  near: number
+  far: number
+  constructor(options: DirectionOptions) {
     super({
       position: options.position,
       color: options.color,
       intensity: options.intensity
     })
-    this.type = 'SpotLight'
+    this.type = 'DirectionLight'
     this.scale = new Vector3(1, 1, 1)
     this.target = new Vector3(0, 0, 0)
     this.up = new Vector3(0, 1, 0)
     this.rotation = new Euler()
     this.quaternion = new Quaternion()
     this.lookAt = [0, 0, 0]
-    this.fov = options.fov || 75
-    this.aspect = options.aspect || 1
-    this.nearZ = options.nearZ || 0.01
-    this.farZ = options.farZ || 1000
+    this.left = options.left || -100
+    this.right = options.right || 100
+    this.top = options.top || 100
+    this.bottom = options.bottom || -100
+    this.near = options.near || -100
+    this.far = options.far || 100
     this.projectionMatrix = new Matrix4()
   }
   getProjectionMatrix() {
-    const near = this.nearZ
-    let top = near * Math.tan((Math.PI / 180) * 0.5 * this.fov)
-    let height = 2 * top
-    let width = this.aspect * height
-    let left = -0.5 * width
-    this.projectionMatrix.makePerspective(
+    const dx = (this.right - this.left) / 2
+    const dy = (this.top - this.bottom) / 2
+    const cx = (this.right + this.left) / 2
+    const cy = (this.top + this.bottom) / 2
+
+    let left = cx - dx
+    let right = cx + dx
+    let top = cy + dy
+    let bottom = cy - dy
+    this.projectionMatrix.makeOrthographic(
       left,
-      left + width,
+      right,
       top,
-      top - height,
-      near,
-      this.farZ
+      bottom,
+      this.near,
+      this.far
     )
     return this.projectionMatrix
     // 同相机的透视投影矩阵

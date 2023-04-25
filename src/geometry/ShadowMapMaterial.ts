@@ -51,7 +51,7 @@ export default class ShadowMapMaterial extends Material {
     // 相机位置视图矩阵
     mat4array.set(engine.lightViewMatrix.elements)
     gl.uniformMatrix4fv(uniformLocations['u_viewMatrix'], false, mat4array)
-    mat4array.set(engine.projectionMatrix.elements)
+    mat4array.set(engine.lightProjectionMatrix.elements)
     gl.uniformMatrix4fv(
       uniformLocations['u_projectionMatrix'],
       false,
@@ -70,7 +70,14 @@ export default class ShadowMapMaterial extends Material {
     let gl = engine._gl
     const mat4array = new Float32Array(16)
     mat4array.set(engine.lightViewMatrix.elements)
-    gl.uniformMatrix4fv(uniformLocations['u_lightMatrix'], false, mat4array)
+    gl.uniformMatrix4fv(uniformLocations['u_lightViewMatrix'], false, mat4array)
+
+    mat4array.set(engine.lightProjectionMatrix.elements)
+    gl.uniformMatrix4fv(
+      uniformLocations['u_lightProjectionMatrix'],
+      false,
+      mat4array
+    )
 
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, engine.shadowMapComponent.fbo.depthTexture)

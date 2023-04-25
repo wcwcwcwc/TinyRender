@@ -7,6 +7,7 @@ import Light from './light/Light'
 import PhongMaterial from './geometry/PhongMaterial'
 import AmbientLight from './light/AmbientLight'
 import SpotLight from './light/SpotLight'
+import DirectionLight from './light/DirectionLight'
 
 export default {
   Engine,
@@ -17,5 +18,6 @@ export default {
   Light,
   PhongMaterial,
   AmbientLight,
-  SpotLight
+  SpotLight,
+  DirectionLight
 }

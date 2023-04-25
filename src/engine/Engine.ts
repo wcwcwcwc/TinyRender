@@ -149,7 +149,7 @@ export default class Engine {
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
     this.viewMatrix = this.camera.setViewMatrix()
     this.lightViewMatrix = this.light.setViewMatrix()
-    this.lightProjectionMatrix = this.projectionMatrix // 默认点光源采用和相机一样的透视投影矩阵
+    this.lightProjectionMatrix = this.light.getProjectionMatrix() // 默认点光源采用和相机一样的透视投影矩阵
     if (this.isShowShadow) {
       //bindFBO....
       this.shadowMapComponent.fbo.setCurrentFrameBufferObject()

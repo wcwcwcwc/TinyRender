@@ -9,7 +9,8 @@ uniform mat4 u_projectionMatrix;
 
 
 #ifdef SHADOW_MAP
-  uniform mat4 u_lightMatrix;
+  uniform mat4 u_lightViewMatrix;
+  uniform mat4 u_lightProjectionMatrix;
   out vec4 v_positionFromLight;
 #endif
 
@@ -27,7 +28,7 @@ void main() {
   v_worldPosition = vec3(u_worldMatrix * vec4(a_position,1.0));
 
   #ifdef SHADOW_MAP
-  v_positionFromLight = u_projectionMatrix * u_lightMatrix * u_worldMatrix * vec4(a_position,1.0);
+  v_positionFromLight = u_lightProjectionMatrix * u_lightViewMatrix * u_worldMatrix * vec4(a_position,1.0);
   #endif
 
 }
