@@ -17,6 +17,7 @@ in vec3 v_normal;
 #ifdef SHADOW_MAP
   uniform sampler2D u_shadowMapDepth;
   in vec4 v_positionFromLight;
+  in float v_depthMetricSM;
 #endif
 
 out vec4 outColor;
@@ -27,6 +28,7 @@ out vec4 outColor;
     vec3 positionNDC = positionW * 0.5 + 0.5;
     float currentDepth = positionNDC.z;
     float cloestDepthInMap = texture(u_shadowMapDepth, positionNDC.xy).r;
+    // float currentDepth = clamp(v_depthMetricSM, 0., 1.0);
     float shadow = currentDepth > cloestDepthInMap  ? 0.0 : 1.0;   
     // 视锥体外保持原有颜色
     if(currentDepth > 1.0 || positionNDC.x < 0.0 || positionNDC.x > 1.0 || positionNDC.y < 0.0 || positionNDC.y > 1.0){

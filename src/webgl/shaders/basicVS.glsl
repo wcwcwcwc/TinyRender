@@ -12,6 +12,7 @@ uniform mat4 u_projectionMatrix;
   uniform mat4 u_lightViewMatrix;
   uniform mat4 u_lightProjectionMatrix;
   out vec4 v_positionFromLight;
+  out float v_depthMetricSM;
 #endif
 
 
@@ -29,6 +30,7 @@ void main() {
 
   #ifdef SHADOW_MAP
   v_positionFromLight = u_lightProjectionMatrix * u_lightViewMatrix * u_worldMatrix * vec4(a_position,1.0);
+  v_depthMetricSM = (v_positionFromLight.z + 1.0) / 10001.0;
   #endif
 
 }

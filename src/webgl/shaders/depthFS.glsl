@@ -1,6 +1,8 @@
 
+in float v_depthMetricSM;
 out vec4 outColor;
 
 void main() {
-  outColor = vec4(gl_FragCoord.z);
+    float depthSM = v_depthMetricSM;
+  outColor = vec4(depthSM, 1.0, 1.0, 1.0);
 }
