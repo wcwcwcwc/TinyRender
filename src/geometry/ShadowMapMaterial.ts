@@ -69,7 +69,7 @@ export default class ShadowMapMaterial extends Material {
 
     // 归一化[0, 1]。gl_Position.z可能因为bias超过1，因此需要归一化
     // 平行光采用正交矩阵，depthValue.x = 1.0，depthValue.y = 2.0，归一化为[0，1]
-    // 平行光采用正交矩阵，depthValue.x = nearZ，depthValue.y = nearZ + farZ，归一化为[0，1]
+    // 点光源采用透视矩阵，depthValue.x = nearZ，depthValue.y = nearZ + farZ，归一化为[0，1]
     if (light.type === 'SpotLight') {
       gl.uniform2f(
         uniformLocations['u_depthValue'],

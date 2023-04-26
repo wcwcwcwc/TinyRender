@@ -2,10 +2,18 @@ import FrameBufferObject from '../../webgl/FrameBufferObject'
 import ShadowMapMaterial from '../../geometry/ShadowMapMaterial'
 
 // shadowMapComponent类，内部定义
+// 实现四种采样方式
+enum Sample {
+  'DEFAULT',
+  'POISSON',
+  'PCF',
+  'PCSS'
+}
 interface ShadowMapComponentOptions {
   normalBias: number
   bias: number
   light: any
+  sample: Sample
 }
 export default class ShadowMapComponent {
   fbo: FrameBufferObject
@@ -14,6 +22,7 @@ export default class ShadowMapComponent {
   light: any
   bias: number
   normalBias: number
+  sample: Sample
   constructor(
     gl: any,
     width: number,
@@ -25,5 +34,6 @@ export default class ShadowMapComponent {
     this.light = options.light
     this.bias = options.bias || 0.1
     this.normalBias = options.normalBias || 0.001
+    this.sample = options.sample || Sample.DEFAULT
   }
 }
