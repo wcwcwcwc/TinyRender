@@ -26,9 +26,9 @@ out vec4 outColor;
   float ShadowCalculation(vec4 positionFromLight){
     vec3 positionW = positionFromLight.xyz / positionFromLight.w;
     vec3 positionNDC = positionW * 0.5 + 0.5;
-    float currentDepth = positionNDC.z;
+    // float currentDepth = positionNDC.z;
     float cloestDepthInMap = texture(u_shadowMapDepth, positionNDC.xy).r;
-    // float currentDepth = clamp(v_depthMetricSM, 0., 1.0);
+    float currentDepth = clamp(v_depthMetricSM, 0., 1.0);
     float shadow = currentDepth > cloestDepthInMap  ? 0.0 : 1.0;   
     // 视锥体外保持原有颜色
     if(currentDepth > 1.0 || positionNDC.x < 0.0 || positionNDC.x > 1.0 || positionNDC.y < 0.0 || positionNDC.y > 1.0){

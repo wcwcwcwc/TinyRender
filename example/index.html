@@ -139,7 +139,9 @@
         // 添加点光源
         renderer.addLight(light);
 
-        renderer.addShadow(true, {})
+        renderer.addShadow(true, {
+            light
+        })
 
         // gui
         const effectController = {

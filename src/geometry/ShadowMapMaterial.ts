@@ -10,6 +10,7 @@ interface ShadowMapMaterialOptions {}
 export default class ShadowMapMaterial extends Material {
   fbo: FrameBufferObject
   pass: number
+  light: any
   constructor(gl: any, width: number, height: number) {
     super({
       color: 'rgba(1.0,1.0,1.0,1.0)',
@@ -57,6 +58,18 @@ export default class ShadowMapMaterial extends Material {
       false,
       mat4array
     )
+    // 归一化[0, 1]。gl_Position.z可能因为bias超过1，因此需要归一化
+    // 平行光采用正交矩阵，depthValue.x = 1.0，depthValue.y = 2.0，归一化为[0，1]
+    // 平行光采用正交矩阵，depthValue.x = nearZ，depthValue.y = nearZ + farZ，归一化为[0，1]
+    if (this.light.type === 'SpotLight') {
+      gl.uniform2f(
+        uniformLocations['u_depthValue'],
+        this.light.nearZ,
+        this.light.nearZ + this.light.farZ
+      )
+    } else if (this.light.type === 'DirectionLight') {
+      gl.uniform2f(uniformLocations['u_depthValue'], 1, 2)
+    }
     let color = mesh.material.colorArray
     let r = color[0]
     let g = color[1]
@@ -78,9 +91,18 @@ export default class ShadowMapMaterial extends Material {
       false,
       mat4array
     )
+    if (this.light.type === 'SpotLight') {
+      gl.uniform2f(
+        uniformLocations['u_depthValue'],
+        this.light.nearZ,
+        this.light.nearZ + this.light.farZ
+      )
+    } else if (this.light.type === 'DirectionLight') {
+      gl.uniform2f(uniformLocations['u_depthValue'], 1, 2)
+    }
 
     gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, engine.shadowMapComponent.fbo.depthTexture)
+    gl.bindTexture(gl.TEXTURE_2D, engine.shadowMapComponent.fbo.colorTexture)
     gl.uniform1i(uniformLocations['u_shadowMapDepth'], 0)
   }
 }

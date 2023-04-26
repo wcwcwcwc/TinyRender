@@ -2,7 +2,9 @@ import FrameBufferObject from '../../webgl/FrameBufferObject'
 import ShadowMapMaterial from '../../geometry/ShadowMapMaterial'
 
 // shadowMapComponent类，内部定义
-interface ShadowMapComponentOptions {}
+interface ShadowMapComponentOptions {
+  light: any
+}
 export default class ShadowMapComponent {
   fbo: FrameBufferObject
   pass: number
@@ -15,5 +17,6 @@ export default class ShadowMapComponent {
   ) {
     this.fbo = new FrameBufferObject({ gl, width, height })
     this.material = new ShadowMapMaterial(gl, width, height)
+    this.material.light = options.light
   }
 }
