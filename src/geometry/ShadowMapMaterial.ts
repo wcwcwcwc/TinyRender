@@ -42,6 +42,7 @@ export default class ShadowMapMaterial extends Material {
   }
   // pass1:shadowMap相关uniform
   bindUniform(engine: any, mesh: any) {
+    const { light, bias, normalBias } = engine.shadowMapComponent
     // base_Uniform + material_uniform
     let gl = engine._gl
     let uniformLocations = this.program.uniformLocations
@@ -61,15 +62,16 @@ export default class ShadowMapMaterial extends Material {
     // 归一化[0, 1]。gl_Position.z可能因为bias超过1，因此需要归一化
     // 平行光采用正交矩阵，depthValue.x = 1.0，depthValue.y = 2.0，归一化为[0，1]
     // 平行光采用正交矩阵，depthValue.x = nearZ，depthValue.y = nearZ + farZ，归一化为[0，1]
-    if (this.light.type === 'SpotLight') {
+    if (light.type === 'SpotLight') {
       gl.uniform2f(
         uniformLocations['u_depthValue'],
-        this.light.nearZ,
-        this.light.nearZ + this.light.farZ
+        light.nearZ,
+        light.nearZ + light.farZ
       )
-    } else if (this.light.type === 'DirectionLight') {
+    } else if (light.type === 'DirectionLight') {
       gl.uniform2f(uniformLocations['u_depthValue'], 1, 2)
     }
+    gl.uniform2f(uniformLocations['u_biasAndScale'], bias, normalBias)
     let color = mesh.material.colorArray
     let r = color[0]
     let g = color[1]
@@ -80,6 +82,7 @@ export default class ShadowMapMaterial extends Material {
 
   // pass2:shadowMap相关uniform
   bindShadowMapUniform(engine: any, uniformLocations: any) {
+    const { light, bias, normalBias } = engine.shadowMapComponent
     let gl = engine._gl
     const mat4array = new Float32Array(16)
     mat4array.set(engine.lightViewMatrix.elements)
@@ -91,13 +94,13 @@ export default class ShadowMapMaterial extends Material {
       false,
       mat4array
     )
-    if (this.light.type === 'SpotLight') {
+    if (light.type === 'SpotLight') {
       gl.uniform2f(
         uniformLocations['u_depthValue'],
-        this.light.nearZ,
-        this.light.nearZ + this.light.farZ
+        light.nearZ,
+        light.nearZ + light.farZ
       )
-    } else if (this.light.type === 'DirectionLight') {
+    } else if (light.type === 'DirectionLight') {
       gl.uniform2f(uniformLocations['u_depthValue'], 1, 2)
     }
 

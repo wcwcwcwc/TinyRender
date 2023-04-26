@@ -63,6 +63,5 @@ export default class SpotLight extends Light {
       this.farZ
     )
     return this.projectionMatrix
-    // 同相机的透视投影矩阵
   }
 }

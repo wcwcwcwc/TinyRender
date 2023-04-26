@@ -73,6 +73,5 @@ export default class DirectionLight extends Light {
       this.far
     )
     return this.projectionMatrix
-    // 同相机的透视投影矩阵
   }
 }

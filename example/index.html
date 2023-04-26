@@ -71,6 +71,20 @@
         // 添加材质
         cubeMesh.material = cubeMaterial;
 
+        let sphereMesh = new TinyRender.Mesh('sphere',{
+            radius:15
+        })
+
+        let sphereMaterial = new TinyRender.PhongMaterial({
+            'specularStrength': lightOptions.specularStrength,
+            'shininess': lightOptions.shininess,
+            'color': 'rgba(0.93333333333,0.91372549019,0.7490196078,1.0)',
+            'opacity': 1.0
+        })
+
+        sphereMesh.material=sphereMaterial;
+        sphereMesh.setPosition([-30,-30,25])
+
 
         let planeMesh = new TinyRender.Mesh('plane', {
             width: 3000,
@@ -93,9 +107,10 @@
         planeMesh.material = planeMaterial;
         renderer.addMesh(planeMesh)
         renderer.addMesh(cubeMesh)
+        renderer.addMesh(sphereMesh)
 
         // 灯光设置
-        let lightPosition = [-5, -31, 39]
+        let lightPosition = [-8, -50, 45]
         let light = new TinyRender.DirectionLight({
             position: lightPosition,
             color: 'rgb(1.0,1.0,1.0)',
@@ -140,14 +155,16 @@
         renderer.addLight(light);
 
         renderer.addShadow(true, {
-            light
+            light,
+            bias:0.01,
+            normalBias:0.001
         })
 
         // gui
         const effectController = {
-            LightPosition_X: 63.14194837127275,
-            LightPosition_Y: -24.90426787498173,
-            LightPosition_Z: 84.8102596571634,
+            LightPosition_X: lightPosition[0],
+            LightPosition_Y: lightPosition[1],
+            LightPosition_Z: lightPosition[2],
             ambientIntensity: lightOptions.ambientIntensity,
             specularStrength: lightOptions.specularStrength,
             shininess: lightOptions.shininess
