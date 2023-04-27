@@ -62,7 +62,7 @@ export default {
     resolve(),
     glsl({
 			// By default, everything gets included
-			include: 'src/webgl/shaders/*.glsl',
+			include: ['src/webgl/shaders/*.glsl', 'src/webgl/shaders/shadersInclude/*.glsl'],
 
 			// // Undefined by default
 			// exclude: ['**/index.html'],

@@ -4,6 +4,7 @@ import Program from '../webgl/Program'
 import basicFS from '../webgl/shaders/basicFS.glsl'
 //@ts-ignore
 import basicVS from '../webgl/shaders/basicVS.glsl'
+import { ShaderInclude } from '../webgl/shaders/shadersInclude'
 
 export default class Material {
   public type: string
@@ -42,7 +43,16 @@ export default class Material {
       // 是否启用shadowMap
       if (engine.isShowShadow && this.isReceiveShadow) {
         this.defines.push('#define SHADOW_MAP')
+        if (engine.shadowMapComponent.sample === 'POISSON') {
+          this.defines.push('#define POISSON_SAMPLE')
+        } else {
+          this.defines.push('#define DEFAULT_SAMPLE')
+        }
       }
+
+      // 替换include
+      vs_source = this.replaceInclude(vs_source)
+      fs_source = this.replaceInclude(fs_source)
 
       headShader_vs = headShader_vs.concat(this.defines)
       headShader_fs = headShader_fs.concat(this.defines)
@@ -77,5 +87,14 @@ export default class Material {
     let b = color[2]
     let a = color[3]
     gl.uniform4f(uniformLocations['u_color'], r, g, b, a)
+  }
+
+  replaceInclude(shader: string): string {
+    const includePattern = /^[ \t]*#include +<([\w\d./]+)>/gm
+    return shader.replace(includePattern, this.replaceFunction.bind(this))
+  }
+  replaceFunction(match: string, include: string) {
+    const string = ShaderInclude[include]
+    return this.replaceInclude(string)
   }
 }
