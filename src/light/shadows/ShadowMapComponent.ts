@@ -29,7 +29,13 @@ export default class ShadowMapComponent {
     height: number,
     options: ShadowMapComponentOptions
   ) {
-    this.fbo = new FrameBufferObject({ gl, width, height })
+    // shadowMap 默认深度缓冲开启纹理对比【webgl2：硬件加速】
+    this.fbo = new FrameBufferObject({
+      gl,
+      width,
+      height,
+      depthTextureComparison: true
+    })
     this.material = new ShadowMapMaterial(gl, width, height)
     this.light = options.light
     this.bias = options.bias || 0.1

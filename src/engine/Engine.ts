@@ -130,8 +130,8 @@ export default class Engine {
       this.isShowShadow = isShowShadow
       this.shadowMapComponent = new ShadowMapComponent(
         this._gl,
-        this.width,
-        this.height,
+        512,
+        512,
         shadowOptions
       )
     }
@@ -153,7 +153,7 @@ export default class Engine {
     if (this.isShowShadow) {
       //bindFBO....
       this.shadowMapComponent.fbo.setCurrentFrameBufferObject()
-      this.resize()
+      this.shadowMapComponent.fbo.resize()
       this.shadowMapComponent.pass = 1
       this.draw()
       this.shadowMapComponent.pass = 2

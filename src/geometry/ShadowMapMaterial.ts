@@ -16,7 +16,7 @@ export default class ShadowMapMaterial extends Material {
       color: 'rgba(1.0,1.0,1.0,1.0)',
       opacity: 1
     })
-    this.fbo = new FrameBufferObject({ gl, width, height })
+    // this.fbo = new FrameBufferObject({ gl, width, height })
   }
   // 第一次pass的program
   initProgram(gl: any, engine: any) {
@@ -90,7 +90,7 @@ export default class ShadowMapMaterial extends Material {
 
   // pass2:shadowMap相关uniform
   bindShadowMapUniform(engine: any, uniformLocations: any) {
-    const { light, bias, normalBias } = engine.shadowMapComponent
+    const { light, bias, normalBias, fbo } = engine.shadowMapComponent
     let gl = engine._gl
     const mat4array = new Float32Array(16)
     mat4array.set(engine.lightViewMatrix.elements)
@@ -111,9 +111,22 @@ export default class ShadowMapMaterial extends Material {
     } else if (light.type === 'DirectionLight') {
       gl.uniform2f(uniformLocations['u_depthValue'], 1, 2)
     }
+    let textureWidth = fbo.width
+    let textureHeight = fbo.height
+    gl.uniform4f(
+      uniformLocations['u_shadowMapSizeAndInverse'],
+      textureWidth,
+      textureHeight,
+      1 / textureWidth,
+      1 / textureHeight
+    )
 
     gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, engine.shadowMapComponent.fbo.colorTexture)
-    gl.uniform1i(uniformLocations['u_shadowMapDepth'], 0)
+    gl.bindTexture(gl.TEXTURE_2D, fbo.colorTexture)
+    gl.uniform1i(uniformLocations['u_shadowMap'], 0)
+
+    gl.activeTexture(gl.TEXTURE1)
+    gl.bindTexture(gl.TEXTURE_2D, fbo.depthTexture)
+    gl.uniform1i(uniformLocations['u_shadowMapDepth'], 1)
   }
 }

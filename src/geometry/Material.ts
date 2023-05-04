@@ -45,6 +45,8 @@ export default class Material {
         this.defines.push('#define SHADOW_MAP')
         if (engine.shadowMapComponent.sample === 'POISSON') {
           this.defines.push('#define POISSON_SAMPLE')
+        } else if (engine.shadowMapComponent.sample === 'PCF') {
+          this.defines.push('#define PCF_SAMPLE')
         } else {
           this.defines.push('#define DEFAULT_SAMPLE')
         }

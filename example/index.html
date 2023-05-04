@@ -157,8 +157,9 @@
         renderer.addShadow(true, {
             light,
             bias:0.01,
-            normalBias:1,
-            sample:'POISSON'
+            normalBias:0.001,
+            // sample:'POISSON'
+            sample:'PCF'
         })
 
         // gui
