@@ -10,4 +10,8 @@
     #ifdef PCF_SAMPLE
     shadow = ShadowCalculationWithPCF5Sampling(v_positionFromLight);
     #endif
+
+    #ifdef PCSS_SAMPLE
+    shadow = ShadowCalculationWithPCSSSampling(v_positionFromLight);
+    #endif
 #endif

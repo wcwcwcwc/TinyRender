@@ -47,6 +47,8 @@ export default class Material {
           this.defines.push('#define POISSON_SAMPLE')
         } else if (engine.shadowMapComponent.sample === 'PCF') {
           this.defines.push('#define PCF_SAMPLE')
+        } else if (engine.shadowMapComponent.sample === 'PCSS') {
+          this.defines.push('#define PCSS_SAMPLE')
         } else {
           this.defines.push('#define DEFAULT_SAMPLE')
         }

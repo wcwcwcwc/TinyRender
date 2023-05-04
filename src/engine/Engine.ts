@@ -134,6 +134,8 @@ export default class Engine {
         512,
         shadowOptions
       )
+    } else {
+      this.isShowShadow = false
     }
   }
 
