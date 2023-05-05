@@ -22,6 +22,10 @@
     return fract(sin(dot_product) * 43758.5453);
   }
 
+  float getRand(vec2 seed) {
+    return fract(sin(dot(seed.xy, vec2(12.9898, 78.233)))*43758.5453);
+  }
+
   #ifdef DEFAULT_SAMPLE
     float ShadowCalculation(vec4 positionFromLight){
       vec3 positionW = positionFromLight.xyz / positionFromLight.w;
@@ -300,13 +304,13 @@
             float avgBlockerDepth = sumBlockerDepth / numBlocker;
 
             // Offset preventing aliasing on contact.
-            float AAOffset = u_shadowMapSizeAndInverse.z * 10.;
+            float AAOffset = u_shadowMapSizeAndInverse.z * 50.;
             // Do not dividing by z despite being physically incorrect looks better due to the limited kernel size.
-            // float penumbraRatio = (depthMetric - avgBlockerDepth) / avgBlockerDepth;
-            float penumbraRatio = ((v_depthMetricSM - avgBlockerDepth) + AAOffset);
+            float penumbraRatio = (v_depthMetricSM - avgBlockerDepth) / avgBlockerDepth;
+            // float penumbraRatio = ((v_depthMetricSM - avgBlockerDepth) + AAOffset);
             float filterRadius = penumbraRatio * u_lightSizeUV * u_shadowMapSizeAndInverse.z;
 
-            float random = random(gl_FragCoord.xyy,0);
+            float random = getRand(positionFromLight.xy);
             float rotationAngle = random * 3.1415926;
             vec2 rotationVector = vec2(cos(rotationAngle), sin(rotationAngle));
 
@@ -315,12 +319,15 @@
                 vec3 offset = PoissonSamplers64[i];
                 // Rotated offset.
                 offset = vec3(offset.x * rotationVector.x - offset.y * rotationVector.y, offset.y * rotationVector.x + offset.x * rotationVector.y, 0.);
-                shadow += texture(u_shadowMapDepth, uvDepth + offset * filterRadius);
+                float currentDepth = texture(u_shadowMap, uvDepth.xy + offset.xy * filterRadius).r;
+                float sm = v_depthMetricSM > currentDepth  ? 0.0 : 1.0;   
+                shadow += sm;
+                // shadow += texture(u_shadowMapDepth, uvDepth + offset * filterRadius);
             }
             shadow /= float(64);
 
             // Blocker distance falloff
-            shadow = mix(shadow, 1., v_depthMetricSM - avgBlockerDepth);
+            // shadow = mix(shadow, 1., v_depthMetricSM - avgBlockerDepth);
 
             return shadow;
           }

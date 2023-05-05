@@ -121,7 +121,7 @@ export default class ShadowMapMaterial extends Material {
       1 / textureHeight
     )
     if (sample === 'PCSS') {
-      gl.uniform1f(uniformLocations['u_lightSizeUV'], 7.68)
+      gl.uniform1f(uniformLocations['u_lightSizeUV'], 37.68)
     }
 
     gl.activeTexture(gl.TEXTURE0)
