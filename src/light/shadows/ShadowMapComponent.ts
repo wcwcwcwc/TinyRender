@@ -14,6 +14,8 @@ interface ShadowMapComponentOptions {
   bias: number
   light: any
   sample: Sample
+  PCSSSearchRadius: number
+  PCSSFilterRadius: number
 }
 export default class ShadowMapComponent {
   fbo: FrameBufferObject
@@ -23,6 +25,8 @@ export default class ShadowMapComponent {
   bias: number
   normalBias: number
   sample: Sample
+  PCSSSearchRadius: number
+  PCSSFilterRadius: number
   constructor(
     gl: any,
     width: number,
@@ -41,5 +45,7 @@ export default class ShadowMapComponent {
     this.bias = options.bias || 0.1
     this.normalBias = options.normalBias || 0.001
     this.sample = options.sample || Sample.DEFAULT
+    this.PCSSSearchRadius = options.PCSSSearchRadius || 37
+    this.PCSSFilterRadius = options.PCSSFilterRadius || 37
   }
 }

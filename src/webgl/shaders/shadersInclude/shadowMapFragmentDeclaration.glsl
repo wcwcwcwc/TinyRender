@@ -6,6 +6,8 @@
     
     #ifdef PCSS_SAMPLE
     uniform float u_lightSizeUV;
+    uniform float u_searchRadius;
+    uniform float u_filterRadius;
     #endif
 
     in vec4 v_positionFromLight;
@@ -290,7 +292,7 @@
           float sumBlockerDepth = 0.0;
           float numBlocker = 0.0;
           for (int i = 0;i<32;i ++) {
-            blockerDepth = texture(u_shadowMap, uvDepth.xy+(u_lightSizeUV*u_shadowMapSizeAndInverse.z*PoissonSamplers32[i].xy), 0.).r;
+            blockerDepth = texture(u_shadowMap, uvDepth.xy+(u_searchRadius*u_shadowMapSizeAndInverse.z*PoissonSamplers32[i].xy), 0.).r;
             if (blockerDepth < v_depthMetricSM) {
                 sumBlockerDepth += blockerDepth;
                 numBlocker++;
@@ -308,7 +310,7 @@
             // Do not dividing by z despite being physically incorrect looks better due to the limited kernel size.
             float penumbraRatio = (v_depthMetricSM - avgBlockerDepth) / avgBlockerDepth;
             // float penumbraRatio = ((v_depthMetricSM - avgBlockerDepth) + AAOffset);
-            float filterRadius = penumbraRatio * u_lightSizeUV * u_shadowMapSizeAndInverse.z;
+            float filterRadius = penumbraRatio * u_filterRadius * u_shadowMapSizeAndInverse.z;
 
             float random = getRand(positionFromLight.xy);
             float rotationAngle = random * 3.1415926;
@@ -319,15 +321,41 @@
                 vec3 offset = PoissonSamplers64[i];
                 // Rotated offset.
                 offset = vec3(offset.x * rotationVector.x - offset.y * rotationVector.y, offset.y * rotationVector.x + offset.x * rotationVector.y, 0.);
-                float currentDepth = texture(u_shadowMap, uvDepth.xy + offset.xy * filterRadius).r;
-                float sm = v_depthMetricSM > currentDepth  ? 0.0 : 1.0;   
-                shadow += sm;
-                // shadow += texture(u_shadowMapDepth, uvDepth + offset * filterRadius);
+                // float currentDepth = texture(u_shadowMap, uvDepth.xy + offset.xy * filterRadius).r;
+                // float sm = v_depthMetricSM > currentDepth  ? 0.0 : 1.0;   
+                // shadow += sm;
+                shadow += texture(u_shadowMapDepth, uvDepth + offset * filterRadius);
             }
             shadow /= float(64);
 
-            // Blocker distance falloff
+            // // Blocker distance falloff
             // shadow = mix(shadow, 1., v_depthMetricSM - avgBlockerDepth);
+            // vec2 poissonDisk[16];
+            // poissonDisk[0] = vec2(-0.94201624, -0.39906216);
+            // poissonDisk[1] = vec2(0.94558609, -0.76890725);
+            // poissonDisk[2] = vec2(-0.094184101, -0.92938870);
+            // poissonDisk[3] = vec2(0.34495938, 0.29387760);
+            // poissonDisk[4] = vec2( -0.91588581, 0.45771432 );
+            // poissonDisk[5] = vec2( -0.81544232, -0.87912464 );
+            // poissonDisk[6] = vec2( -0.38277543, 0.27676845 );
+            // poissonDisk[7] = vec2( 0.97484398, 0.75648379 );
+            // poissonDisk[8] = vec2( 0.44323325, -0.97511554 );
+            // poissonDisk[9] = vec2( 0.53742981, -0.47373420 );
+            // poissonDisk[10] = vec2( -0.26496911, -0.41893023 );
+            // poissonDisk[11] = vec2( 0.79197514, 0.19090188 ); 
+            // poissonDisk[12] = vec2( -0.24188840, 0.99706507 );
+            // poissonDisk[13] = vec2( -0.81409955, 0.91437590 );
+            // poissonDisk[14] = vec2( 0.19984126, 0.78641367 );
+            // poissonDisk[15] = vec2( 0.14383161, -0.14100790 ); 
+            // for (int i = 0; i < 4; i++) {
+            // int index = int(16.0 * random(positionFromLight.xyy, i)) % 16;
+            //   for (int j = 0; j < 16; j++) {
+            //     if (j == index) {
+            //         if (texture(u_shadowMap, uvDepth.xy + poissonDisk[j] * filterRadius).x < v_depthMetricSM) shadow -= 0.25;
+            //         break;
+            //       }
+            //     }
+            // }
 
             return shadow;
           }

@@ -90,7 +90,15 @@ export default class ShadowMapMaterial extends Material {
 
   // pass2:shadowMap相关uniform
   bindShadowMapUniform(engine: any, uniformLocations: any) {
-    const { light, bias, normalBias, fbo, sample } = engine.shadowMapComponent
+    const {
+      light,
+      bias,
+      normalBias,
+      fbo,
+      sample,
+      PCSSSearchRadius,
+      PCSSFilterRadius
+    } = engine.shadowMapComponent
     let gl = engine._gl
     const mat4array = new Float32Array(16)
     mat4array.set(engine.lightViewMatrix.elements)
@@ -121,7 +129,9 @@ export default class ShadowMapMaterial extends Material {
       1 / textureHeight
     )
     if (sample === 'PCSS') {
-      gl.uniform1f(uniformLocations['u_lightSizeUV'], 37.68)
+      // gl.uniform1f(uniformLocations['u_lightSizeUV'], 37.68)
+      gl.uniform1f(uniformLocations['u_searchRadius'], PCSSSearchRadius)
+      gl.uniform1f(uniformLocations['u_filterRadius'], PCSSFilterRadius)
     }
 
     gl.activeTexture(gl.TEXTURE0)
