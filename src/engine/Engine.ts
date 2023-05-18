@@ -129,7 +129,7 @@ export default class Engine {
     if (isShowShadow) {
       this.isShowShadow = isShowShadow
       this.shadowMapComponent = new ShadowMapComponent(
-        this._gl,
+        this,
         2048,
         2048,
         shadowOptions
