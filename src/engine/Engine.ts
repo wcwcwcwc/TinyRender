@@ -13,6 +13,7 @@ import AmbientLight from '../light/AmbientLight'
 import Light from '../light/Light'
 import ShadowMapComponent from '../light/shadows/ShadowMapComponent'
 import _ from 'lodash'
+import CascadedShadowMapComponentComponent from '../light/shadows/CascadedShadowMapComponent'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -128,12 +129,21 @@ export default class Engine {
   addShadow(isShowShadow: boolean, shadowOptions: any) {
     if (isShowShadow) {
       this.isShowShadow = isShowShadow
-      this.shadowMapComponent = new ShadowMapComponent(
-        this,
-        2048,
-        2048,
-        shadowOptions
-      )
+      if (shadowOptions.enableCascadedShadowMap) {
+        this.shadowMapComponent = new CascadedShadowMapComponentComponent(
+          this,
+          2048,
+          2048,
+          shadowOptions
+        )
+      } else {
+        this.shadowMapComponent = new ShadowMapComponent(
+          this,
+          2048,
+          2048,
+          shadowOptions
+        )
+      }
     } else {
       this.isShowShadow = false
     }

@@ -81,12 +81,13 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     height: number,
     options: CascadedShadowMapComponentOptions
   ) {
-    super(engine, width, height, options)
+    super(engine._gl, width, height, options)
     this.engine = engine
     this.width = width
     this.height = height
     this.cascadesNum = options.cascadesNum || 4
     this.lambda = options.lambda || 0.5
+    this.enableCascadedShadowMap = options.enableCascadedShadowMap || false
     if (this.enableCascadedShadowMap && this.light instanceof DirectionLight) {
       this.initComponent()
       this.splitFrustum()
@@ -106,6 +107,10 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     this._frustumCenter = []
     this._shadowCameraPos = []
     this._frustumCornersWorldSpace = []
+
+    this._viewSpaceFrustumsZ = new Array(this.cascadesNum)
+    this._frustumLengths = new Array(this.cascadesNum)
+
     for (
       let cascadeIndex = 0;
       cascadeIndex < this.cascadesNum;
@@ -208,7 +213,10 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     let cameraViewMatrix = camera.setViewMatrix() // 更新视图矩阵
     let cameraProjectionMatrix = camera.camera.projectionMatrix
     let cameraViewProMatrix = new Matrix4()
-    cameraViewProMatrix.multiply(cameraProjectionMatrix, cameraViewMatrix)
+    cameraViewProMatrix.multiplyMatrices(
+      cameraProjectionMatrix,
+      cameraViewMatrix
+    )
     let invertCameraViewProMatrix = new Matrix4()
     invertCameraViewProMatrix.copy(cameraViewProMatrix).invert() // 相机视图投影逆矩阵
     for (
@@ -243,14 +251,16 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       )
       tempVector2.copy(tempVector).multiplyScalar(prevSplitDist)
       tempVector.multiplyScalar(splitDist)
-      tempVector.addScalar(
-        this._frustumCornersWorldSpace[cascadeIndex][cornerIndex]
+      tempVector.add(
+        this._frustumCornersWorldSpace[cascadeIndex][cornerIndex],
+        undefined
       )
       this._frustumCornersWorldSpace[cascadeIndex][cornerIndex + 4].copy(
         tempVector
       )
-      this._frustumCornersWorldSpace[cascadeIndex][cornerIndex].addScalar(
-        tempVector2
+      this._frustumCornersWorldSpace[cascadeIndex][cornerIndex].add(
+        tempVector2,
+        undefined
       )
     }
   }
@@ -276,7 +286,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     ) {
       this._frustumCenter[cascadeIndex].add(
         this._frustumCornersWorldSpace[cascadeIndex][cornerIndex],
-        null
+        undefined
       )
     }
     this._frustumCenter[cascadeIndex].multiplyScalar(
@@ -324,12 +334,13 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       this._cascadeMinExtents[cascadeIndex]
     )
     // 灯光位置计算
-    let shadowCameraPos = new Vector3()
     let temp = new Vector3()
     temp
       .copy(this.lightDirection)
       .multiplyScalar(this._cascadeMinExtents[cascadeIndex].z)
-    shadowCameraPos.copy(this._frustumCenter[cascadeIndex]).addScalar(temp)
+    this._shadowCameraPos[cascadeIndex]
+      .copy(this._frustumCenter[cascadeIndex])
+      .add(temp, undefined)
 
     // 灯光视图矩阵
     let lookAtMatrix = new Matrix4()
@@ -352,11 +363,11 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
 
     // TODO:mesh构建包围盒与视锥包围再取并集
     // 灯光投影矩阵
-    this._projectionMatrices[cascadeIndex].makePerspective(
+    this._projectionMatrices[cascadeIndex].makeOrthographic(
       this._cascadeMinExtents[cascadeIndex].x,
       this._cascadeMaxExtents[cascadeIndex].x,
-      this._cascadeMinExtents[cascadeIndex].y,
       this._cascadeMaxExtents[cascadeIndex].y,
+      this._cascadeMinExtents[cascadeIndex].y,
       minZ,
       maxZ
     )
@@ -365,7 +376,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     this._cascadeMaxExtents[cascadeIndex].z = maxZ
 
     // 灯光视图矩阵
-    this._transformMatrices[cascadeIndex].multiply(
+    this._transformMatrices[cascadeIndex].multiplyMatrices(
       this._projectionMatrices[cascadeIndex],
       this._viewMatrices[cascadeIndex]
     )
@@ -383,11 +394,11 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     temp2.sub(zeroVector, undefined).multiplyScalar(2 / this.width)
     let tempMatrix = new Matrix4()
     tempMatrix.makeTranslation(temp2.x, temp2.y, 0.0) // 偏移矩阵
-    this._projectionMatrices[cascadeIndex].multiply(
+    this._projectionMatrices[cascadeIndex].multiplyMatrices(
       tempMatrix,
       this._projectionMatrices[cascadeIndex]
     ) // 对投影矩阵进行偏移
-    this._transformMatrices[cascadeIndex].multiply(
+    this._transformMatrices[cascadeIndex].multiplyMatrices(
       this._projectionMatrices[cascadeIndex],
       this._viewMatrices[cascadeIndex]
     )
