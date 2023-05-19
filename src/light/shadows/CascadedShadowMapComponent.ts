@@ -5,6 +5,7 @@ import DirectionLight from '../DirectionLight'
 import Engine from '../../engine/Engine'
 import { Matrix4 } from '../../math/Matrix4'
 import { Vector3 } from '../../math/Vector3'
+import { Quaternion } from '../../math/Quaternion'
 import ShadowMapComponent from './ShadowMapComponent'
 
 // shadowMapComponent类，内部定义
@@ -38,6 +39,9 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     new Vector3(-1.0, -1.0, +1.0)
   ]
 
+  width: number
+  height: number
+
   engine: Engine
   fbo: FrameBufferObject
   pass: number
@@ -57,7 +61,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
   _viewMatrices: Array<Matrix4>
   _projectionMatrices: Array<Matrix4>
   _transformMatrices: Array<Matrix4>
-  _transformMatricesAsArray: Float32Array
+  _transformMatricesAsArray: []
   _frustumLengths: Array<number>
   _lightSizeUVCorrection: Array<number>
   _depthCorrection: Array<number>
@@ -78,6 +82,9 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     options: CascadedShadowMapComponentOptions
   ) {
     super(engine, width, height, options)
+    this.engine = engine
+    this.width = width
+    this.height = height
     this.cascadesNum = options.cascadesNum || 4
     this.lambda = options.lambda || 0.5
     if (this.enableCascadedShadowMap && this.light instanceof DirectionLight) {
@@ -187,6 +194,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       this.computeFrustumInWorldSpace(cascadeIndex)
       // 通过求取相机视锥包围球，计算灯光视锥（正交）的最大最小
       this.computeCascadeFrustum(cascadeIndex)
+      this.computeCascadeMatrix(cascadeIndex)
     }
   }
   /**
@@ -251,5 +259,141 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
    * 通过求取相机视锥包围球，计算灯光视锥（正交）的最大最小
    * @param cascadeIndex
    */
-  computeCascadeFrustum(cascadeIndex: number) {}
+  computeCascadeFrustum(cascadeIndex: number) {
+    this._cascadeMinExtents[cascadeIndex].copy(
+      new Vector3(Number.MAX_VALUE, Number.MAX_VALUE, Number.MAX_VALUE)
+    )
+    this._cascadeMaxExtents[cascadeIndex].copy(
+      new Vector3(Number.MIN_VALUE, Number.MIN_VALUE, Number.MIN_VALUE)
+    )
+    this._frustumCenter[cascadeIndex].copy(new Vector3(0, 0, 0))
+
+    // 通过各个点累加再除，计算视锥体中心
+    for (
+      let cornerIndex = 0;
+      cornerIndex < this._frustumCornersWorldSpace[cascadeIndex].length;
+      ++cornerIndex
+    ) {
+      this._frustumCenter[cascadeIndex].add(
+        this._frustumCornersWorldSpace[cascadeIndex][cornerIndex],
+        null
+      )
+    }
+    this._frustumCenter[cascadeIndex].multiplyScalar(
+      1 / this._frustumCornersWorldSpace[cascadeIndex].length
+    )
+
+    // Stabilize Cascaded
+    // 构建包围球，这里球半径的计算方式采用中心点离各个点最远的那个点的距离，故不是最紧包围球，降低贴图利用率
+    let sphereRadius = 0
+    for (
+      let cornerIndex = 0;
+      cornerIndex < this._frustumCornersWorldSpace[cascadeIndex].length;
+      ++cornerIndex
+    ) {
+      let temp = new Vector3()
+      let dist = temp
+        .subVectors(
+          this._frustumCornersWorldSpace[cascadeIndex][cornerIndex],
+          this._frustumCenter[cascadeIndex]
+        )
+        .length()
+      sphereRadius = Math.max(sphereRadius, dist)
+    }
+    sphereRadius = Math.ceil(sphereRadius * 16) / 16
+    // 包围球的最大最小范围，也是灯光正交矩阵参数
+    this._cascadeMaxExtents[cascadeIndex].set(
+      sphereRadius,
+      sphereRadius,
+      sphereRadius
+    )
+    this._cascadeMinExtents[cascadeIndex].set(
+      -sphereRadius,
+      -sphereRadius,
+      -sphereRadius
+    )
+  }
+  /**
+   * 计算各视锥灯光矩阵
+   * @param cascadeIndex
+   */
+  computeCascadeMatrix(cascadeIndex: number) {
+    let cascadeExtentsRange = new Vector3()
+    cascadeExtentsRange.subVectors(
+      this._cascadeMaxExtents[cascadeIndex],
+      this._cascadeMinExtents[cascadeIndex]
+    )
+    // 灯光位置计算
+    let shadowCameraPos = new Vector3()
+    let temp = new Vector3()
+    temp
+      .copy(this.lightDirection)
+      .multiplyScalar(this._cascadeMinExtents[cascadeIndex].z)
+    shadowCameraPos.copy(this._frustumCenter[cascadeIndex]).addScalar(temp)
+
+    // 灯光视图矩阵
+    let lookAtMatrix = new Matrix4()
+    lookAtMatrix.lookAt(
+      this._shadowCameraPos[cascadeIndex],
+      this._frustumCenter[cascadeIndex],
+      new Vector3(0, 1, 0)
+    )
+    let quaternion = new Quaternion()
+    quaternion.setFromRotationMatrix(lookAtMatrix)
+    this._viewMatrices[cascadeIndex].compose(
+      this._shadowCameraPos[cascadeIndex],
+      quaternion,
+      new Vector3(1, 1, 1)
+    )
+    this._viewMatrices[cascadeIndex].invert()
+
+    let minZ = 0,
+      maxZ = cascadeExtentsRange.z
+
+    // TODO:mesh构建包围盒与视锥包围再取并集
+    // 灯光投影矩阵
+    this._projectionMatrices[cascadeIndex].makePerspective(
+      this._cascadeMinExtents[cascadeIndex].x,
+      this._cascadeMaxExtents[cascadeIndex].x,
+      this._cascadeMinExtents[cascadeIndex].y,
+      this._cascadeMaxExtents[cascadeIndex].y,
+      minZ,
+      maxZ
+    )
+
+    this._cascadeMinExtents[cascadeIndex].z = minZ
+    this._cascadeMaxExtents[cascadeIndex].z = maxZ
+
+    // 灯光视图矩阵
+    this._transformMatrices[cascadeIndex].multiply(
+      this._projectionMatrices[cascadeIndex],
+      this._viewMatrices[cascadeIndex]
+    )
+
+    // 构建偏移矩阵，保证相机移动前和移动后，世界空间中的同一点都能投影到相同纹理贴图上
+    let zeroVector = new Vector3() // 世界坐标原点
+    zeroVector.applyMatrix4(this._transformMatrices[cascadeIndex]) // 变换到裁剪坐标
+    zeroVector.multiplyScalar(this.width / 2) // 纹理坐标
+    let temp2 = new Vector3()
+    temp2.set(
+      Math.round(zeroVector.x),
+      Math.round(zeroVector.y),
+      Math.round(zeroVector.z)
+    )
+    temp2.sub(zeroVector, undefined).multiplyScalar(2 / this.width)
+    let tempMatrix = new Matrix4()
+    tempMatrix.makeTranslation(temp2.x, temp2.y, 0.0) // 偏移矩阵
+    this._projectionMatrices[cascadeIndex].multiply(
+      tempMatrix,
+      this._projectionMatrices[cascadeIndex]
+    ) // 对投影矩阵进行偏移
+    this._transformMatrices[cascadeIndex].multiply(
+      this._projectionMatrices[cascadeIndex],
+      this._viewMatrices[cascadeIndex]
+    )
+    this._transformMatrices[cascadeIndex].toArray(
+      this._transformMatricesAsArray,
+      cascadeIndex * 16
+    )
+  }
 }
