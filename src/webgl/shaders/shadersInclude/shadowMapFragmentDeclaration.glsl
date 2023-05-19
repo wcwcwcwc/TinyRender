@@ -1,13 +1,27 @@
 #ifdef SHADOW_MAP
 
     uniform sampler2D u_shadowMap;
-    uniform highp sampler2DShadow u_shadowMapDepth;
+
     uniform vec4 u_shadowMapSizeAndInverse;
     
     #ifdef PCSS_SAMPLE
     uniform float u_lightSizeUV;
     uniform float u_searchRadius;
     uniform float u_filterRadius;
+    #endif
+
+    #ifdef CASCADED_SHADOW_MAP
+      uniform mat4 u_lightMatrix[SHADOWCSMNUM_CASCADES];
+      uniform float u_viewFrustumZ[SHADOWCSMNUM_CASCADES];
+      uniform float u_frustumLengths[SHADOWCSMNUM_CASCADES];
+      uniform float u_cascadeBlendFactor;
+      in vec4 v_positionFromLight[SHADOWCSMNUM_CASCADES];
+      in float v_depthMetricSM[SHADOWCSMNUM_CASCADES];
+      in vec4 v_positionFromCamera;
+
+      uniform highp sampler2DArrayShadow u_shadowMapDepth;
+    #else
+      uniform highp sampler2DShadow u_shadowMapDepth;
     #endif
 
     in vec4 v_positionFromLight;
@@ -145,7 +159,7 @@
   #endif
 
   #ifdef PCSS_SAMPLE
-      const vec3 PoissonSamplers32[64] = vec3[64](
+    const vec3 PoissonSamplers32[64] = vec3[64](
         vec3(0.06407013, 0.05409927, 0.),
         vec3(0.7366577, 0.5789394, 0.),
         vec3(-0.6270542, -0.5320278, 0.),
@@ -361,6 +375,54 @@
           }
       }
       // return 1.0;
+    }
+  #endif
+
+  #ifdef CASCADED_SHADOW_MAP
+    int index0 = SHADOWCSMNUM_CASCADES0-1;
+    float diff0 = 0.;
+
+    float ShadowCalculationWithCSMPCF5Sampling(float layer, vec4 positionFromLight){
+      if (v_depthMetricSM > 1.0 || v_depthMetricSM < 0.0) {
+          return 1.0;
+      }
+      else
+      {
+          vec3 clipSpace = positionFromLight.xyz / positionFromLight.w;
+          vec3 uvDepth = vec3(0.5 * clipSpace.xyz + vec3(0.5));
+
+          vec2 uv = uvDepth.xy * u_shadowMapSizeAndInverse.xy;	// uv in texel units
+          uv += 0.5;											// offset of half to be in the center of the texel 制造小数位，防止整数uv时不存在小数的情形
+          vec2 st = fract(uv);								// how far from the center
+          vec2 base_uv = floor(uv) - 0.5;						// texel coord
+          base_uv *= u_shadowMapSizeAndInverse.zw;				// move back to uv coords
+
+          // Equation resolved to fit in a 5*5 distribution like 
+          //0 1 3 4 3 1 0
+          // 计算新的uv偏移量以及对应的权重值 
+          vec2 uvw0 = 4. - 3. * st;
+          vec2 uvw1 = vec2(7.);
+          vec2 uvw2 = 1. + 3. * st;
+
+          vec3 u = vec3((3. - 2. * st.x) / uvw0.x - 2., (3. + st.x) / uvw1.x, st.x / uvw2.x + 2.) * u_shadowMapSizeAndInverse.z;
+          vec3 v = vec3((3. - 2. * st.y) / uvw0.y - 2., (3. + st.y) / uvw1.y, st.y / uvw2.y + 2.) * u_shadowMapSizeAndInverse.w;
+
+          float shadow = 0.;
+          // u_shadowMapDepth: sampler2DShadow类型，临近四个点双线性插值
+          shadow += uvw0.x * uvw0.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[0], v[0]), layer, uvDepth.z));
+          shadow += uvw1.x * uvw0.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[1], v[0]), layer, uvDepth.z));
+          shadow += uvw2.x * uvw0.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[2], v[0]), layer, uvDepth.z));
+          shadow += uvw0.x * uvw1.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[0], v[1]), layer, uvDepth.z));
+          shadow += uvw1.x * uvw1.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[1], v[1]), layer, uvDepth.z));
+          shadow += uvw2.x * uvw1.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[2], v[1]), layer, uvDepth.z));
+          shadow += uvw0.x * uvw2.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[0], v[2]), layer, uvDepth.z));
+          shadow += uvw1.x * uvw2.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[1], v[2]), layer, uvDepth.z));
+          shadow += uvw2.x * uvw2.y * texture(u_shadowMapDepth, vec4(base_uv.xy + vec2(u[2], v[2]), layer, uvDepth.z));
+          shadow = shadow / 144.0;
+          return shadow;
+      }
+
+     // return 1.0;
     }
   #endif
 #endif

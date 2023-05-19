@@ -16,6 +16,7 @@ interface ShadowMapComponentOptions {
   sample: Sample
   PCSSSearchRadius: number
   PCSSFilterRadius: number
+  layers: number
 }
 export default class ShadowMapComponent {
   fbo: FrameBufferObject
@@ -39,7 +40,7 @@ export default class ShadowMapComponent {
       width,
       height,
       depthTextureComparison: true,
-      layers: 0
+      layers: options.layers = 0
     })
     this.material = new ShadowMapMaterial(gl, width, height)
     this.light = options.light
