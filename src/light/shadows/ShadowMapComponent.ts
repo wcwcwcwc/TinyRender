@@ -38,7 +38,8 @@ export default class ShadowMapComponent {
       gl,
       width,
       height,
-      depthTextureComparison: true
+      depthTextureComparison: true,
+      layers: 0
     })
     this.material = new ShadowMapMaterial(gl, width, height)
     this.light = options.light

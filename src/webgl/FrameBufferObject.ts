@@ -5,6 +5,7 @@ interface FrameBufferObjectOptions {
   width: number
   height: number
   depthTextureComparison: boolean
+  layers: number
 }
 export default class FrameBufferObject {
   gl: any
@@ -13,11 +14,15 @@ export default class FrameBufferObject {
   colorTexture: any
   depthTexture: any
   fbo: WebGLFramebuffer
+  target: number
+  layers: number
   constructor(options: FrameBufferObjectOptions) {
-    const { gl, width, height, depthTextureComparison } = options
+    const { gl, width, height, depthTextureComparison, layers } = options
     this.gl = gl
     this.width = width
     this.height = height
+    this.target = layers > 0 ? gl.TEXTURE_2D_ARRAY : gl.TEXTURE_2D
+    this.layers = layers
     this.fbo = gl.createFramebuffer()
     this.setCurrentFrameBufferObject()
     this.setColorTexture()
@@ -38,92 +43,137 @@ export default class FrameBufferObject {
   setColorTexture() {
     let gl = this.gl
     this.colorTexture = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, this.colorTexture)
+    gl.bindTexture(this.target, this.colorTexture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      this.width,
-      this.height,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      null
-    )
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      this.colorTexture,
-      0
-    )
+    gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    if (this.layers) {
+      gl.texImage3D(
+        this.target,
+        0,
+        gl.RGBA,
+        this.width,
+        this.height,
+        this.layers,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+      )
+    } else {
+      gl.texImage2D(
+        this.target,
+        0,
+        gl.RGBA,
+        this.width,
+        this.height,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null
+      )
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        this.colorTexture,
+        0
+      )
+    }
   }
   setDepthColorTexture() {
     let gl = this.gl
     this.depthTexture = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, this.depthTexture)
+    gl.bindTexture(this.target, this.depthTexture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.DEPTH_COMPONENT24,
-      this.width,
-      this.height,
-      0,
-      gl.DEPTH_COMPONENT,
-      gl.UNSIGNED_INT,
-      null
-    )
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.DEPTH_ATTACHMENT,
-      gl.TEXTURE_2D,
-      this.depthTexture,
-      0
-    )
+    gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    if (this.layers) {
+      gl.texImage3D(
+        this.target,
+        0,
+        gl.DEPTH_COMPONENT24,
+        this.width,
+        this.height,
+        this.layers,
+        0,
+        gl.DEPTH_COMPONENT,
+        gl.UNSIGNED_INT,
+        null
+      )
+    } else {
+      gl.texImage2D(
+        this.target,
+        0,
+        gl.DEPTH_COMPONENT24,
+        this.width,
+        this.height,
+        0,
+        gl.DEPTH_COMPONENT,
+        gl.UNSIGNED_INT,
+        null
+      )
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.DEPTH_ATTACHMENT,
+        gl.TEXTURE_2D,
+        this.depthTexture,
+        0
+      )
+    }
   }
   updateDepthTextureComparison() {
     let gl = this.gl
     this.depthTexture = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, this.depthTexture)
+    gl.bindTexture(this.target, this.depthTexture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_COMPARE_FUNC, gl.LESS)
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(this.target, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+    gl.texParameteri(this.target, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
+    gl.texParameteri(this.target, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(this.target, gl.TEXTURE_COMPARE_FUNC, gl.LESS)
     gl.texParameteri(
-      gl.TEXTURE_2D,
+      this.target,
       gl.TEXTURE_COMPARE_MODE,
       gl.COMPARE_REF_TO_TEXTURE
     )
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.DEPTH_COMPONENT24,
-      this.width,
-      this.height,
-      0,
-      gl.DEPTH_COMPONENT,
-      gl.UNSIGNED_INT,
-      null
-    )
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.DEPTH_ATTACHMENT,
-      gl.TEXTURE_2D,
-      this.depthTexture,
-      0
-    )
+    if (this.layers) {
+      gl.texImage3D(
+        this.target,
+        0,
+        gl.DEPTH_COMPONENT24,
+        this.width,
+        this.height,
+        this.layers,
+        0,
+        gl.DEPTH_COMPONENT,
+        gl.UNSIGNED_INT,
+        null
+      )
+    } else {
+      gl.texImage2D(
+        this.target,
+        0,
+        gl.DEPTH_COMPONENT24,
+        this.width,
+        this.height,
+        0,
+        gl.DEPTH_COMPONENT,
+        gl.UNSIGNED_INT,
+        null
+      )
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.DEPTH_ATTACHMENT,
+        gl.TEXTURE_2D,
+        this.depthTexture,
+        0
+      )
+    }
   }
   // 初始化gl尺寸，清除缓冲区
   resize() {
