@@ -97,7 +97,8 @@ export default class ShadowMapMaterial extends Material {
       fbo,
       sample,
       PCSSSearchRadius,
-      PCSSFilterRadius
+      PCSSFilterRadius,
+      type
     } = engine.shadowMapComponent
     let gl = engine._gl
     const mat4array = new Float32Array(16)
@@ -132,6 +133,22 @@ export default class ShadowMapMaterial extends Material {
       // gl.uniform1f(uniformLocations['u_lightSizeUV'], 37.68)
       gl.uniform1f(uniformLocations['u_searchRadius'], PCSSSearchRadius)
       gl.uniform1f(uniformLocations['u_filterRadius'], PCSSFilterRadius)
+    }
+
+    if (type === 'CSM') {
+      gl.uniform1f(
+        uniformLocations['u_lightMatrix'],
+        engine.shadowMapComponent._transformMatricesAsArray
+      )
+      gl.uniform1fv(
+        uniformLocations['u_viewFrustumZ'],
+        engine.shadowMapComponent._viewSpaceFrustumsZ
+      )
+      gl.uniform1fv(
+        uniformLocations['u_frustumLengths'],
+        engine.shadowMapComponent._frustumLengths
+      )
+      gl.uniform1f(uniformLocations['u_cascadeBlendFactor'], 10)
     }
 
     gl.activeTexture(gl.TEXTURE0)

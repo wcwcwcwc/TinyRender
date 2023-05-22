@@ -39,6 +39,7 @@ export default class Engine {
   public lightViewMatrix: Matrix4
   public lightProjectionMatrix: Matrix4
   public isShowShadow: boolean = false
+  public enableCascadedShadowMap: boolean = false
   public shadowMapComponent: ShadowMapComponent
 
   constructor(options: IRenderOptions) {
@@ -130,6 +131,8 @@ export default class Engine {
     if (isShowShadow) {
       this.isShowShadow = isShowShadow
       if (shadowOptions.enableCascadedShadowMap) {
+        this.enableCascadedShadowMap = true
+        shadowOptions.layers = shadowOptions.cascadesNum || 4
         this.shadowMapComponent = new CascadedShadowMapComponentComponent(
           this,
           2048,
@@ -146,7 +149,16 @@ export default class Engine {
       }
     } else {
       this.isShowShadow = false
+      this.enableCascadedShadowMap = false
     }
+  }
+
+  /**
+   * 重置灯光矩阵
+   */
+  resetLightMatrix() {
+    this.viewMatrix = this.camera.setViewMatrix()
+    this.lightViewMatrix = this.light.setViewMatrix()
   }
 
   /**渲染
@@ -159,15 +171,48 @@ export default class Engine {
     this.resize()
     this.projectionMatrix = this.camera.camera.projectionMatrix
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
-    this.viewMatrix = this.camera.setViewMatrix()
-    this.lightViewMatrix = this.light.setViewMatrix()
+    this.resetLightMatrix()
     this.lightProjectionMatrix = this.light.getProjectionMatrix() // 默认点光源采用和相机一样的透视投影矩阵
     if (this.isShowShadow) {
       //bindFBO....
       this.shadowMapComponent.fbo.setCurrentFrameBufferObject()
       this.shadowMapComponent.fbo.resize()
       this.shadowMapComponent.pass = 1
-      this.draw()
+      // CSM
+      if (
+        this.shadowMapComponent instanceof CascadedShadowMapComponentComponent
+      ) {
+        // 遍历视锥体分段数，改变灯光矩阵进行逐次绘制
+        for (
+          let index = 0;
+          index < this.shadowMapComponent.cascadesNum;
+          index++
+        ) {
+          this.lightViewMatrix = this.shadowMapComponent._viewMatrices[index]
+          this.lightProjectionMatrix = this.shadowMapComponent._projectionMatrices[
+            index
+          ]
+          this._gl.framebufferTextureLayer(
+            this._gl.FRAMEBUFFER,
+            this._gl.COLOR_ATTACHMENT0,
+            this.shadowMapComponent.fbo.colorTexture,
+            0,
+            index
+          )
+          this._gl.framebufferTextureLayer(
+            this._gl.FRAMEBUFFER,
+            this._gl.DEPTH_ATTACHMENT,
+            this.shadowMapComponent.fbo.depthTexture,
+            0,
+            index
+          )
+          this.shadowMapComponent.fbo.resize()
+          this.draw()
+        }
+      } else {
+        this.draw()
+      }
+      this.resetLightMatrix()
       this.shadowMapComponent.pass = 2
       this.shadowMapComponent.fbo.setNullFrameBufferObject()
       this.resize()

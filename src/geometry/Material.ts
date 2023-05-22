@@ -52,6 +52,12 @@ export default class Material {
         } else {
           this.defines.push('#define DEFAULT_SAMPLE')
         }
+        if (engine.shadowMapComponent.type === 'CSM') {
+          this.defines.push('#define CASCADED_SHADOW_MAP')
+          this.defines.push(
+            `#define SHADOWCSMNUM_CASCADES ${engine.shadowMapComponent.cascadesNum}`
+          )
+        }
       }
 
       // 替换include

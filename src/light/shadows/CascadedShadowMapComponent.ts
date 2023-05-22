@@ -6,7 +6,9 @@ import Engine from '../../engine/Engine'
 import { Matrix4 } from '../../math/Matrix4'
 import { Vector3 } from '../../math/Vector3'
 import { Quaternion } from '../../math/Quaternion'
-import ShadowMapComponent from './ShadowMapComponent'
+import ShadowMapComponent, {
+  ShadowMapComponentOptions
+} from './ShadowMapComponent'
 
 // shadowMapComponent类，内部定义
 // 实现四种采样方式
@@ -16,7 +18,7 @@ enum Sample {
   'PCF',
   'PCSS'
 }
-interface CascadedShadowMapComponentOptions {
+interface CascadedShadowMapComponentOptions extends ShadowMapComponentOptions {
   normalBias: number
   bias: number
   light: Light
@@ -26,6 +28,7 @@ interface CascadedShadowMapComponentOptions {
   enableCascadedShadowMap: boolean
   cascadesNum: number
   lambda: number
+  layers: number
 }
 export default class CascadedShadowMapComponentComponent extends ShadowMapComponent {
   private static readonly _FrustumCornersNDCSpace = [
@@ -41,7 +44,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
 
   width: number
   height: number
-
+  type: string
   engine: Engine
   fbo: FrameBufferObject
   pass: number
@@ -82,6 +85,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     options: CascadedShadowMapComponentOptions
   ) {
     super(engine._gl, width, height, options)
+    this.type = 'CSM'
     this.engine = engine
     this.width = width
     this.height = height

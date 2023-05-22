@@ -9,7 +9,7 @@ enum Sample {
   'PCF',
   'PCSS'
 }
-interface ShadowMapComponentOptions {
+export interface ShadowMapComponentOptions {
   normalBias: number
   bias: number
   light: any
