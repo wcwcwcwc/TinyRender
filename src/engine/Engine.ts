@@ -173,6 +173,7 @@ export default class Engine {
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
     this.resetLightMatrix()
     this.lightProjectionMatrix = this.light.getProjectionMatrix() // 默认点光源采用和相机一样的透视投影矩阵
+
     if (this.isShowShadow) {
       //bindFBO....
       this.shadowMapComponent.fbo.setCurrentFrameBufferObject()
@@ -182,6 +183,10 @@ export default class Engine {
       if (
         this.shadowMapComponent instanceof CascadedShadowMapComponentComponent
       ) {
+        if (this.light.lightNeedUpdate) {
+          this.shadowMapComponent.computeLightMatrices()
+          this.light.lightNeedUpdate = false
+        }
         // 遍历视锥体分段数，改变灯光矩阵进行逐次绘制
         for (
           let index = 0;

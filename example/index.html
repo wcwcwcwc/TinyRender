@@ -156,7 +156,7 @@
 
         renderer.addShadow(true, {
             light,
-            bias: 0.01,
+            bias: 0.03,
             normalBias: 0.001,
             // sample:'POISSON'
             sample: 'PCSS',
@@ -186,21 +186,21 @@
             gui.add(effectController, "LightPosition_X").onChange(function (value) {
                 if (renderer.light) {
                     lightPosition[0] = value;
-                    renderer.light.position[0] = value;
+                    renderer.light.setPosition(lightPosition)
                     lightMesh.setPosition(lightPosition)
                 }
             });
             gui.add(effectController, "LightPosition_Y").onChange(function (value) {
                 if (renderer.light) {
                     lightPosition[1] = value;
-                    renderer.light.position[1] = value;
+                    renderer.light.setPosition(lightPosition)
                     lightMesh.setPosition(lightPosition)
                 }
             });
             gui.add(effectController, "LightPosition_Z").onChange(function (value) {
                 if (renderer.light) {
                     lightPosition[2] = value;
-                    renderer.light.position[2] = value;
+                    renderer.light.setPosition(lightPosition)
                     lightMesh.setPosition(lightPosition)
                 }
             });

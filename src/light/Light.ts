@@ -27,6 +27,7 @@ export default class Light {
   public lookAt: number[]
   public scale: any
   public projectionMatrix: Matrix4
+  public lightNeedUpdate: boolean
   constructor(options: LightOptions) {
     this.position = options.position
     this.color = options.color
@@ -38,9 +39,11 @@ export default class Light {
     this.rotation = new Euler()
     this.quaternion = new Quaternion()
     this.lookAt = [0, 0, 0]
+    this.lightNeedUpdate = false
   }
   setPosition(position: number[]) {
     this.position = position
+    this.lightNeedUpdate = true
   }
   setColor(color: string) {
     this.color = color
