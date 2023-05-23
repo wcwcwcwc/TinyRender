@@ -81,7 +81,7 @@
             'color': 'rgba(0.93333333333,0.91372549019,0.7490196078,1.0)',
             'opacity': 1.0
         })
-        let spherePosition = [-30, -30, 25]
+        let spherePosition = [-30, -30, 45]
         sphereMesh.material = sphereMaterial;
         sphereMesh.setPosition(spherePosition)
 
@@ -110,7 +110,7 @@
         renderer.addMesh(sphereMesh)
 
         // 灯光设置
-        let lightPosition = [-8, -50, 45]
+        let lightPosition = [-8, -30, 145]
         let light = new TinyRender.DirectionLight({
             position: lightPosition,
             color: 'rgb(1.0,1.0,1.0)',

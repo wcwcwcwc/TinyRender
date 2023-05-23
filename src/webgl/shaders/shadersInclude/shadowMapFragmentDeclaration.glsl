@@ -22,10 +22,11 @@
       uniform highp sampler2DArrayShadow u_shadowMapDepth;
     #else
       uniform highp sampler2DShadow u_shadowMapDepth;
+      in vec4 v_positionFromLight;
+      in float v_depthMetricSM;
     #endif
 
-    in vec4 v_positionFromLight;
-    in float v_depthMetricSM;
+
 
 #endif
 
@@ -379,18 +380,18 @@
   #endif
 
   #ifdef CASCADED_SHADOW_MAP
-    int index0 = SHADOWCSMNUM_CASCADES0-1;
+    int index0 = SHADOWCSMNUM_CASCADES-1;
     float diff0 = 0.;
 
-    float ShadowCalculationWithCSMPCF5Sampling(float layer, vec4 positionFromLight){
-      if (v_depthMetricSM > 1.0 || v_depthMetricSM < 0.0) {
+    float ShadowCalculationWithCSMPCF5Sampling(float layer, vec4 positionFromLight, float depthMetricSM){
+      if (depthMetricSM > 1.0 || depthMetricSM < 0.0) {
           return 1.0;
       }
       else
       {
           vec3 clipSpace = positionFromLight.xyz / positionFromLight.w;
           vec3 uvDepth = vec3(0.5 * clipSpace.xyz + vec3(0.5));
-
+          uvDepth.z = clamp(uvDepth.z, 0., 0.99999994);
           vec2 uv = uvDepth.xy * u_shadowMapSizeAndInverse.xy;	// uv in texel units
           uv += 0.5;											// offset of half to be in the center of the texel 制造小数位，防止整数uv时不存在小数的情形
           vec2 st = fract(uv);								// how far from the center
@@ -421,8 +422,6 @@
           shadow = shadow / 144.0;
           return shadow;
       }
-
-     // return 1.0;
     }
   #endif
 #endif

@@ -42,6 +42,8 @@ export default class Program {
     // add this for extra debugging
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       var info = gl.getProgramInfoLog(this.program)
+      var error_log = gl.getShaderInfoLog(fragmentShader)
+      console.log(error_log)
       throw new Error('Could not compile WebGL program. \n\n' + info)
     }
 
@@ -74,7 +76,10 @@ export default class Program {
 
     for (let i = 0; i < n; ++i) {
       const info = gl.getActiveUniform(program, i)
-      const name: any = info.name
+      let name: any = info.name
+      if (name.indexOf('[')) {
+        name = name.split('[')[0]
+      }
       let location = gl.getUniformLocation(program, name)
       this.uniformLocations[name] = location
     }

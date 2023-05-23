@@ -141,7 +141,7 @@ export default class Engine {
         )
       } else {
         this.shadowMapComponent = new ShadowMapComponent(
-          this,
+          this._gl,
           2048,
           2048,
           shadowOptions
@@ -176,7 +176,7 @@ export default class Engine {
     if (this.isShowShadow) {
       //bindFBO....
       this.shadowMapComponent.fbo.setCurrentFrameBufferObject()
-      this.shadowMapComponent.fbo.resize()
+      // this.shadowMapComponent.fbo.resize()
       this.shadowMapComponent.pass = 1
       // CSM
       if (
@@ -206,7 +206,8 @@ export default class Engine {
             0,
             index
           )
-          this.shadowMapComponent.fbo.resize()
+          this.shadowMapComponent.fbo.viewport()
+          this._gl.clear(this._gl.DEPTH_BUFFER_BIT)
           this.draw()
         }
       } else {

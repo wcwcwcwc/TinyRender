@@ -40,12 +40,12 @@ export default class ShadowMapComponent {
       width,
       height,
       depthTextureComparison: true,
-      layers: options.layers = 0
+      layers: options.layers
     })
     this.material = new ShadowMapMaterial(gl, width, height)
     this.light = options.light
-    this.bias = options.bias || 0.1
-    this.normalBias = options.normalBias || 0.001
+    this.bias = options.bias || 0
+    this.normalBias = options.normalBias || 0
     this.sample = options.sample || Sample.DEFAULT
     this.PCSSSearchRadius = options.PCSSSearchRadius || 37
     this.PCSSFilterRadius = options.PCSSFilterRadius || 37

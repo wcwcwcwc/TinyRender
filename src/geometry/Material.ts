@@ -43,20 +43,21 @@ export default class Material {
       // 是否启用shadowMap
       if (engine.isShowShadow && this.isReceiveShadow) {
         this.defines.push('#define SHADOW_MAP')
-        if (engine.shadowMapComponent.sample === 'POISSON') {
-          this.defines.push('#define POISSON_SAMPLE')
-        } else if (engine.shadowMapComponent.sample === 'PCF') {
-          this.defines.push('#define PCF_SAMPLE')
-        } else if (engine.shadowMapComponent.sample === 'PCSS') {
-          this.defines.push('#define PCSS_SAMPLE')
-        } else {
-          this.defines.push('#define DEFAULT_SAMPLE')
-        }
         if (engine.shadowMapComponent.type === 'CSM') {
           this.defines.push('#define CASCADED_SHADOW_MAP')
           this.defines.push(
             `#define SHADOWCSMNUM_CASCADES ${engine.shadowMapComponent.cascadesNum}`
           )
+        } else {
+          if (engine.shadowMapComponent.sample === 'POISSON') {
+            this.defines.push('#define POISSON_SAMPLE')
+          } else if (engine.shadowMapComponent.sample === 'PCF') {
+            this.defines.push('#define PCF_SAMPLE')
+          } else if (engine.shadowMapComponent.sample === 'PCSS') {
+            this.defines.push('#define PCSS_SAMPLE')
+          } else {
+            this.defines.push('#define DEFAULT_SAMPLE')
+          }
         }
       }
 

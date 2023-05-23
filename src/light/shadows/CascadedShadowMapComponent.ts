@@ -111,6 +111,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     this._frustumCenter = []
     this._shadowCameraPos = []
     this._frustumCornersWorldSpace = []
+    this._transformMatricesAsArray = []
 
     this._viewSpaceFrustumsZ = new Array(this.cascadesNum)
     this._frustumLengths = new Array(this.cascadesNum)
@@ -192,7 +193,9 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       this.light.position[2]
     )
     this.lightDirection = new Vector3()
-    this.lightDirection.subVectors(this.lightPosition, this.lightLookAt)
+    // this.lightDirection.subVectors(this.lightPosition, this.lightLookAt)
+    this.lightDirection.subVectors(this.lightLookAt, this.lightPosition)
+    console.log(this.lightDirection)
     this.lightDirection.normalize()
     for (
       let cascadeIndex = 0;

@@ -136,8 +136,9 @@ export default class ShadowMapMaterial extends Material {
     }
 
     if (type === 'CSM') {
-      gl.uniform1f(
+      gl.uniformMatrix4fv(
         uniformLocations['u_lightMatrix'],
+        false,
         engine.shadowMapComponent._transformMatricesAsArray
       )
       gl.uniform1fv(
@@ -149,14 +150,22 @@ export default class ShadowMapMaterial extends Material {
         engine.shadowMapComponent._frustumLengths
       )
       gl.uniform1f(uniformLocations['u_cascadeBlendFactor'], 10)
+
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, fbo.colorTexture)
+      gl.uniform1i(uniformLocations['u_shadowMap'], 0)
+
+      gl.activeTexture(gl.TEXTURE1)
+      gl.bindTexture(gl.TEXTURE_2D_ARRAY, fbo.depthTexture)
+      gl.uniform1i(uniformLocations['u_shadowMapDepth'], 1)
+    } else {
+      gl.activeTexture(gl.TEXTURE0)
+      gl.bindTexture(gl.TEXTURE_2D, fbo.colorTexture)
+      gl.uniform1i(uniformLocations['u_shadowMap'], 0)
+
+      gl.activeTexture(gl.TEXTURE1)
+      gl.bindTexture(gl.TEXTURE_2D, fbo.depthTexture)
+      gl.uniform1i(uniformLocations['u_shadowMapDepth'], 1)
     }
-
-    gl.activeTexture(gl.TEXTURE0)
-    gl.bindTexture(gl.TEXTURE_2D, fbo.colorTexture)
-    gl.uniform1i(uniformLocations['u_shadowMap'], 0)
-
-    gl.activeTexture(gl.TEXTURE1)
-    gl.bindTexture(gl.TEXTURE_2D, fbo.depthTexture)
-    gl.uniform1i(uniformLocations['u_shadowMapDepth'], 1)
   }
 }

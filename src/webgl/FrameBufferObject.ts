@@ -183,4 +183,7 @@ export default class FrameBufferObject {
     this.gl.clear(this.gl.DEPTH_BUFFER_BIT)
     this.gl.clear(this.gl.STENCIL_BUFFER_BIT)
   }
+  viewport() {
+    this.gl.viewport(0, 0, this.width, this.height)
+  }
 }
