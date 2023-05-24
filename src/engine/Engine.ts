@@ -216,6 +216,7 @@ export default class Engine {
           this.draw()
         }
       } else {
+        this.shadowMapComponent.fbo.resize()
         this.draw()
       }
       this.resetLightMatrix()

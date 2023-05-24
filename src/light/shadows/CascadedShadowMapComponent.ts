@@ -371,10 +371,10 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
     // TODO:mesh构建包围盒与视锥包围再取并集
     // 灯光投影矩阵
     this._projectionMatrices[cascadeIndex].makeOrthographic(
-      this._cascadeMinExtents[cascadeIndex].x,
-      this._cascadeMaxExtents[cascadeIndex].x,
-      this._cascadeMaxExtents[cascadeIndex].y,
-      this._cascadeMinExtents[cascadeIndex].y,
+      this._cascadeMinExtents[cascadeIndex].x - 200,
+      this._cascadeMaxExtents[cascadeIndex].x + 200,
+      this._cascadeMaxExtents[cascadeIndex].y + 200,
+      this._cascadeMinExtents[cascadeIndex].y - 200,
       minZ,
       maxZ
     )
