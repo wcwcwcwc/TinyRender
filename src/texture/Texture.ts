@@ -1,4 +1,5 @@
 import Engine from '../engine/Engine'
+import loadImage from '../misc/Ajax'
 
 // 纹理参数选项
 interface TextureParametersOptions {
@@ -14,6 +15,7 @@ interface TextureParametersOptions {
   internalFormat: number
   format: number
   type: number
+  noMipmap: boolean
 }
 
 /**
@@ -38,6 +40,7 @@ export default class Texture {
   public internalFormat: number
   public format: number
   public type: number
+  public noMipmap: boolean
   constructor(
     engine: Engine,
     url: string,
@@ -80,6 +83,8 @@ export default class Texture {
     this.type =
       (TextureParametersOptions && TextureParametersOptions.type) ||
       this.gl.UNSIGNED_BYTE
+    this.noMipmap =
+      (TextureParametersOptions && TextureParametersOptions.noMipmap) || false
     this.createTexture()
     this.loadTexture()
   }
@@ -117,6 +122,37 @@ export default class Texture {
     )
     gl.bindTexture(target, null)
   }
-  loadTexture() {}
-  update() {}
+  loadTexture() {
+    loadImage(this.url, this.update, () => {}, '')
+  }
+  update(img: HTMLImageElement | ImageBitmap) {
+    const {
+      gl,
+      target,
+      magFilter,
+      minFilter,
+      wrapS,
+      wrapT,
+      internalFormat,
+      format,
+      type
+    } = this
+
+    let width = img.width || this.width
+    let height = img.height || this.height
+    gl.bindTexture(target, this.webglTexture)
+    gl.texImage2D(
+      target,
+      0,
+      internalFormat,
+      width,
+      height,
+      0,
+      format,
+      type,
+      img
+    )
+    gl.bindTexture(target, null)
+    this.loaded = true
+  }
 }
