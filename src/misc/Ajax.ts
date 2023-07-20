@@ -194,7 +194,7 @@ function RequestFile(
   }
 }
 
-function loadFile(
+export function loadFile(
   fileOrUrl: File | string,
   onSuccess: (
     data: string | ArrayBuffer,
@@ -225,7 +225,7 @@ function loadFile(
   )
 }
 
-export default function loadImage(
+export function loadImage(
   input: string | ArrayBuffer | ArrayBufferView | Blob,
   onLoad: (img: HTMLImageElement | ImageBitmap) => void,
   onError: (message?: string, exception?: any) => void,
