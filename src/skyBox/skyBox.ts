@@ -1,6 +1,6 @@
 import Engine from '../engine/Engine'
 import Mesh from '../geometry/Mesh'
-import SkyBoxMaterial from '../geometry/skyBoxMaterial'
+import SkyBoxMaterial from '../geometry/SkyBoxMaterial'
 import HDRCubeTexture from '../texture/HDRCubeTexture'
 import {
   IndexBuffer,

@@ -16,8 +16,8 @@ import _ from 'lodash'
 import CascadedShadowMapComponentComponent from '../light/shadows/CascadedShadowMapComponent'
 import Texture from '../texture/Texture'
 import HDRCubeTexture from '../texture/HDRCubeTexture'
-import SkyBoxMaterial from '../geometry/skyBoxMaterial'
-import SkyBox from '../skyBox/skyBox'
+import SkyBoxMaterial from '../geometry/SkyBoxMaterial'
+import SkyBox from '../skyBox/SkyBox'
 
 type Nullable<T> = T | null
 // render构造函数参数接口

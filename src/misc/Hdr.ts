@@ -1,5 +1,5 @@
 // 用以解析HDR（RGBE）文件，参考babylon解析
-import { PanoramaToCubeMapTools } from './panoramaToCubemap'
+import { PanoramaToCubeMapTools } from './PanoramaToCubemap'
 
 /**
  * Header information of HDR texture files.
