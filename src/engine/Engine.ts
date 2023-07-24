@@ -14,6 +14,10 @@ import Light from '../light/Light'
 import ShadowMapComponent from '../light/shadows/ShadowMapComponent'
 import _ from 'lodash'
 import CascadedShadowMapComponentComponent from '../light/shadows/CascadedShadowMapComponent'
+import Texture from '../texture/Texture'
+import HDRCubeTexture from '../texture/HDRCubeTexture'
+import SkyBoxMaterial from '../geometry/skyBoxMaterial'
+import SkyBox from '../skyBox/skyBox'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -41,6 +45,8 @@ export default class Engine {
   public isShowShadow: boolean = false
   public enableCascadedShadowMap: boolean = false
   public shadowMapComponent: ShadowMapComponent
+  public environmentTexture: HDRCubeTexture
+  public skyBox: SkyBox
 
   constructor(options: IRenderOptions) {
     this.container = options.container
@@ -159,10 +165,20 @@ export default class Engine {
   }
 
   /**
+   * 添加天空盒
+   * @param environmentTexture 天空盒hdr贴图
+   */
+  addSkyBox(environmentTexture: HDRCubeTexture) {
+    this.environmentTexture = environmentTexture
+    if (!this.skyBox) {
+      this.skyBox = new SkyBox(this, this.environmentTexture)
+    }
+  }
+
+  /**
    * 重置灯光矩阵
    */
   resetLightMatrix() {
-    this.viewMatrix = this.camera.setViewMatrix()
     this.lightViewMatrix = this.light.setViewMatrix()
   }
 
@@ -174,6 +190,7 @@ export default class Engine {
    */
   render() {
     this.resize()
+    this.viewMatrix = this.camera.setViewMatrix()
     this.projectionMatrix = this.camera.camera.projectionMatrix
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
     if (this.light) {
@@ -230,6 +247,10 @@ export default class Engine {
       this.shadowMapComponent.pass = 2
       this.shadowMapComponent.fbo.setNullFrameBufferObject()
       this.resize()
+    }
+    if (this.environmentTexture && this.environmentTexture.loaded) {
+      // 天空盒渲染
+      this.skyBox.draw()
     }
     this.draw()
   }

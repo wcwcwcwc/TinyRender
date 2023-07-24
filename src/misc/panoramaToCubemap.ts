@@ -200,12 +200,10 @@ export class PanoramaToCubeMapTools {
     const buffer = new ArrayBuffer(texSize * texSize * 4 * 3)
     const textureArray = new Float32Array(buffer)
 
-    const rotDX1 = faceData[1]
-      .sub(faceData[0], undefined)
-      .multiplyScalar(1 / texSize)
-    const rotDX2 = faceData[3]
-      .sub(faceData[2], undefined)
-      .multiplyScalar(1 / texSize)
+    let rotDX1 = new Vector3(faceData[1].x, faceData[1].y, faceData[1].z)
+    rotDX1.sub(faceData[0], undefined).multiplyScalar(1 / texSize)
+    let rotDX2 = new Vector3(faceData[3].x, faceData[3].y, faceData[3].z)
+    rotDX2.sub(faceData[2], undefined).multiplyScalar(1 / texSize)
 
     const dy = 1 / texSize
     let fy = 0
@@ -215,8 +213,8 @@ export class PanoramaToCubeMapTools {
       let xv2 = faceData[2]
 
       for (let x = 0; x < texSize; x++) {
-        const v = xv2
-          .sub(xv1, undefined)
+        let v = new Vector3(xv2.x, xv2.y, xv2.z)
+        v.sub(xv1, undefined)
           .multiplyScalar(fy)
           .add(xv1, undefined)
         v.normalize()
@@ -233,8 +231,8 @@ export class PanoramaToCubeMapTools {
         textureArray[y * texSize * 3 + x * 3 + 1] = color.g
         textureArray[y * texSize * 3 + x * 3 + 2] = color.b
 
-        xv1 = xv1.add(rotDX1, undefined)
-        xv2 = xv2.add(rotDX2, undefined)
+        xv1 = new Vector3(xv1.x + rotDX1.x, xv1.y + rotDX1.y, xv1.z + rotDX1.z)
+        xv2 = new Vector3(xv2.x + rotDX2.x, xv2.y + rotDX2.y, xv2.z + rotDX2.z)
       }
 
       fy += dy

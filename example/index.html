@@ -41,7 +41,7 @@
         },
         renderer.canvas
       )
-      camera.setPosition([0.20843, -104.146, 30.8784])
+      camera.setPosition([0,0,100])
       camera.lookAt = [0, 0, 0]
       renderer.addCamera(camera)
       // 设置相机可交互
@@ -49,6 +49,8 @@
 
       let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
       let metallicTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg');
+      // 添加天空盒
+      renderer.addSkyBox(environmentTexture);
 
       // gui
       const effectController = {

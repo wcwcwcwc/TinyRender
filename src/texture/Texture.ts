@@ -205,7 +205,6 @@ export default class Texture {
     for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
       let faceData = data[faceIndex]
       faceData = this.convertRGBtoRGBATextureData(faceData, width, height, type)
-
       gl.texImage2D(
         gl.TEXTURE_CUBE_MAP_POSITIVE_X + faceIndex,
         level,

@@ -18,8 +18,8 @@ export default class Material {
   constructor(options: any) {
     const { color, opacity, isReceiveShadow } = options
     this.type = 'Material'
-    this.color = color
-    this.opacity = opacity
+    this.color = color || 'rgba(1,1,1,1)'
+    this.opacity = opacity || 1
     this.isReceiveShadow = true
     this.colorArray = rgbaToArray(this.color)
     this.defines = []
