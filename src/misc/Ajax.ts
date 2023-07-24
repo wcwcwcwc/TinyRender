@@ -89,10 +89,6 @@ function RequestFile(
 
     let onLoadEnd: Nullable<() => void> = () => {
       unbindEvents()
-
-      fileRequest.onCompleteObservable.notifyObservers(fileRequest)
-      fileRequest.onCompleteObservable.clear()
-
       onProgress = undefined
       onReadyStateChange = null
       onLoadEnd = null
@@ -192,6 +188,8 @@ function RequestFile(
 
     retryLoop(0)
   }
+  requestFile()
+  return fileRequest
 }
 
 export function loadFile(

@@ -85,15 +85,14 @@ export default class Texture {
     this.type =
       (TextureParametersOptions && TextureParametersOptions.type) ||
       this.gl.UNSIGNED_BYTE
-    this.noMipmap =
-      (TextureParametersOptions && TextureParametersOptions.noMipmap) || false
+    this.noMipmap = true
     //  this.createTexture()
     // this.loadTexture()
   }
   createTexture() {
     this.webglTexture = this.gl.createTexture()
   }
-  updateTexture(data: any) {
+  updateTexture() {
     const {
       gl,
       target,
@@ -113,21 +112,21 @@ export default class Texture {
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
     gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
     gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT)
-    gl.texImage2D(
-      target,
-      0,
-      internalFormat,
-      width,
-      height,
-      0,
-      format,
-      type,
-      data
-    )
+    // gl.texImage2D(
+    //   target,
+    //   0,
+    //   internalFormat,
+    //   width,
+    //   height,
+    //   0,
+    //   format,
+    //   type,
+    //   data
+    // )
     gl.bindTexture(target, null)
   }
   loadTexture() {
-    loadImage(this.url, this.update, () => {}, '')
+    loadImage(this.url, this.update.bind(this), () => {}, '')
   }
   update(img: HTMLImageElement | ImageBitmap) {
     const {
@@ -160,11 +159,34 @@ export default class Texture {
     this.loaded = true
   }
 
+  createCubeTexture() {
+    this.createTexture()
+    this.target = this.gl.TEXTURE_CUBE_MAP
+    this.gl.bindTexture(this.target, this.webglTexture)
+    if (!this.noMipmap) {
+      this.minFilter = this.gl.LINEAR_MIPMAP_LINEAR
+      this.magFilter = this.gl.LINEAR
+    } else {
+      this.minFilter = this.gl.LINEAR
+      this.magFilter = this.gl.LINEAR
+    }
+    const { gl, target, magFilter, minFilter, wrapS, wrapT } = this
+    gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, magFilter)
+    gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
+    gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
+    gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT)
+    gl.bindTexture(this.target, null)
+  }
+
   updateCubeTexture(
     data: ArrayBufferView[],
     compression: Nullable<string> = null,
     level: number = 0
   ) {
+    this.format = this.gl.RGBA32F
+    this.internalFormat = this.gl.RGBA
+    this.type = this.gl.FLOAT
+    this.target = this.gl.TEXTURE_CUBE_MAP
     const {
       gl,
       target,
@@ -178,14 +200,10 @@ export default class Texture {
       width,
       height
     } = this
-    this.format = gl.RGBA32F
-    this.internalFormat = gl.RGBA
-    this.type = gl.FLOAT
     gl.bindTexture(target, this.webglTexture)
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
     for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
       let faceData = data[faceIndex]
-
       faceData = this.convertRGBtoRGBATextureData(faceData, width, height, type)
 
       gl.texImage2D(
@@ -200,7 +218,9 @@ export default class Texture {
         faceData
       )
     }
+
     gl.generateMipmap(gl.TEXTURE_CUBE_MAP)
+
     gl.bindTexture(target, null)
     this.loaded = true
   }

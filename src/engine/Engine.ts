@@ -58,7 +58,12 @@ export default class Engine {
     return window.devicePixelRatio
   }
 
-  setExtension() {}
+  setExtension() {
+    // 使得RGBA32F支持renderable
+    this._gl.getExtension('EXT_color_buffer_float')
+    // 使得RGBA32F支持filterable
+    this._gl.getExtension('OES_texture_float_linear')
+  }
 
   // 初始化gl
   setup() {
@@ -171,8 +176,10 @@ export default class Engine {
     this.resize()
     this.projectionMatrix = this.camera.camera.projectionMatrix
     this.projectionMatrixInverse = this.camera.camera.projectionMatrixInverse
-    this.resetLightMatrix()
-    this.lightProjectionMatrix = this.light.getProjectionMatrix() // 默认点光源采用和相机一样的透视投影矩阵
+    if (this.light) {
+      this.resetLightMatrix()
+      this.lightProjectionMatrix = this.light.getProjectionMatrix() // 默认点光源采用和相机一样的透视投影矩阵
+    }
 
     if (this.isShowShadow) {
       //bindFBO....

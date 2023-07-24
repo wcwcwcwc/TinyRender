@@ -28,7 +28,10 @@ export default class HDRCubeTexture extends Texture {
     this.loaded = false
     this.gl = this.engine._gl
     this.size = size || 512
-    this.createTexture()
+    this.width = size
+    this.height = size
+    this.noMipmap = false
+    this.createCubeTexture()
     this.loadFile(
       this.url,
       data => {

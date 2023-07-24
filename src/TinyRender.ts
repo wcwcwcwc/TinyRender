@@ -8,6 +8,8 @@ import PhongMaterial from './geometry/PhongMaterial'
 import AmbientLight from './light/AmbientLight'
 import SpotLight from './light/SpotLight'
 import DirectionLight from './light/DirectionLight'
+import HDRCubeTexture from './texture/HDRCubeTexture'
+import Texture2D from './texture/Texture2D'
 
 export default {
   Engine,
@@ -19,5 +21,7 @@ export default {
   PhongMaterial,
   AmbientLight,
   SpotLight,
-  DirectionLight
+  DirectionLight,
+  HDRCubeTexture,
+  Texture2D
 }

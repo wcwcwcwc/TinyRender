@@ -202,10 +202,10 @@ export class PanoramaToCubeMapTools {
 
     const rotDX1 = faceData[1]
       .sub(faceData[0], undefined)
-      .multiply(1 / texSize, undefined)
+      .multiplyScalar(1 / texSize)
     const rotDX2 = faceData[3]
       .sub(faceData[2], undefined)
-      .multiply(1 / texSize, undefined)
+      .multiplyScalar(1 / texSize)
 
     const dy = 1 / texSize
     let fy = 0
@@ -217,7 +217,7 @@ export class PanoramaToCubeMapTools {
       for (let x = 0; x < texSize; x++) {
         const v = xv2
           .sub(xv1, undefined)
-          .multiply(fy, undefined)
+          .multiplyScalar(fy)
           .add(xv1, undefined)
         v.normalize()
 

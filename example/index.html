@@ -2,31 +2,31 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <link rel="shortcut icon" href="#" />
-    <title>Document</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <link rel="shortcut icon" href="#" />
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-        #webglDOM {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+    #webglDOM {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 
 <body>
-    <canvas id="webglDOM"></canvas>
-    <script src="../dist/tinyRender.umd.js"></script>
-    <script type="module">
-        import { GUI } from './utils/dat.gui.module.js'
+  <canvas id="webglDOM"></canvas>
+  <script src="../dist/tinyRender.umd.js"></script>
+  <script type="module">
+    import { GUI } from './utils/dat.gui.module.js'
       // 实例化引擎
       let renderer = new TinyRender.Engine({
         container: 'webglDOM'
@@ -46,224 +46,16 @@
       renderer.addCamera(camera)
       // 设置相机可交互
       renderer.addCameraOrbitControls()
-      // 添加mesh
-      let cubeMesh = new TinyRender.Mesh('cube', {
-        height: 15,
-        width: 15,
-        depth: 150
-      })
-      // 设置mesh位置
-      cubeMesh.setPosition([0, 0, 25])
-      // let cubeMaterial = new TinyRender.Material({
-      //     'color': 'rgba(1.0,0.0,1.0,1.0)',
-      //     'opacity': 1.0
-      // })
-      let lightOptions = {
-        ambientIntensity: 0.1,
-        specularStrength: 0.5,
-        shininess: 32
-      }
 
-      let cubeMaterial = new TinyRender.PhongMaterial({
-        specularStrength: lightOptions.specularStrength,
-        shininess: lightOptions.shininess,
-        color: 'rgba(0.76470588,1.0,0.8862745098,1.0)',
-        opacity: 1.0
-      })
-
-      // 添加材质
-      cubeMesh.material = cubeMaterial
-
-      let sphereMesh = new TinyRender.Mesh('sphere', {
-        radius: 15
-      })
-
-      let sphereMaterial = new TinyRender.PhongMaterial({
-        specularStrength: lightOptions.specularStrength,
-        shininess: lightOptions.shininess,
-        color: 'rgba(0.93333333333,0.91372549019,0.7490196078,1.0)',
-        opacity: 1.0
-      })
-      let spherePosition = [-30, -30, 45]
-      sphereMesh.material = sphereMaterial
-      sphereMesh.setPosition(spherePosition)
-
-      let planeMesh = new TinyRender.Mesh('plane', {
-        width: 3000,
-        height: 3000
-      })
-      planeMesh.setPosition([0, 0, 0])
-      // let planeMaterial = new TinyRender.Material({
-      //     'color': 'rgba(0.76470588,1.0,0.8862745098,1.0)',
-      //     'opacity': 1.0
-      // })
-
-      let planeMaterial = new TinyRender.PhongMaterial({
-        specularStrength: lightOptions.specularStrength,
-        shininess: lightOptions.shininess,
-        color: 'rgba(1.0,1.0,1.0,1.0)',
-        opacity: 1.0
-      })
-
-      // 添加材质
-      planeMesh.material = planeMaterial
-      renderer.addMesh(planeMesh)
-      renderer.addMesh(cubeMesh)
-      renderer.addMesh(sphereMesh)
-
-      for (let i = 1; i < 11; i++) {
-        let CSMMesh = new TinyRender.Mesh('cube', {
-          height: 15,
-          width: 15,
-          depth: 150
-        })
-        CSMMesh.material = cubeMaterial;
-        CSMMesh.setPosition([0, i *30, 25]);
-        renderer.addMesh(CSMMesh)
-      }
-
-      // 灯光设置
-      let lightPosition = [-15, 13, 35]
-      let light = new TinyRender.DirectionLight({
-        position: lightPosition,
-        color: 'rgb(1.0,1.0,1.0)',
-        intensity: 1,
-        // 灯光矩阵计算需要
-        // fov: 75,
-        // aspect: window.innerWidth / window.innerHeight,
-        // nearZ: 0.01,
-        // farZ: 1000
-
-        left: -500,
-        right: 500,
-        top: 500,
-        bottom: -500,
-        near: -500,
-        far: 1000
-      })
-      let ambientLight = new TinyRender.AmbientLight({
-        intensity: lightOptions.ambientIntensity
-      })
-      // 可视化灯光
-      let lightMesh = new TinyRender.Mesh('cube', {
-        height: 5,
-        width: 5,
-        depth: 5
-      })
-
-      let lightMaterial = new TinyRender.Material({
-        color: 'rgba(1.0,0.0,1.0,1.0)',
-        opacity: 1.0,
-        isReceiveShadow: false
-      })
-      lightMaterial.isReceiveShadow = false
-      lightMesh.material = lightMaterial
-      lightMesh.setPosition(lightPosition)
-      lightMesh.userData['isLight'] = true
-
-      renderer.addMesh(lightMesh)
-      // 添加环境光
-      renderer.addAmbientLight(ambientLight)
-      // 添加点光源
-      renderer.addLight(light)
-      let shadowPosition={
-        bias: 0.01,
-        normalBias: 0.001,
-      }
-      renderer.addShadow(true, {
-        light,
-        bias: shadowPosition.bias,
-        normalBias: shadowPosition.normalBias,
-        // sample:'POISSON'
-        // sample: 'PCSS',
-        // sample:'PCF',
-        PCSSSearchRadius: 37,
-        PCSSFilterRadius: 37,
-        enableCascadedShadowMap: true // 是否开启CSM，级联阴影
-      })
+      let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
+      let metallicTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg');
 
       // gui
       const effectController = {
-        LightPosition_X: lightPosition[0],
-        LightPosition_Y: lightPosition[1],
-        LightPosition_Z: lightPosition[2],
-        ambientIntensity: lightOptions.ambientIntensity,
-        specularStrength: lightOptions.specularStrength,
-        shininess: lightOptions.shininess,
-        PCSSSearchRadius: 37,
-        PCSSFilterRadius: 37,
-        spherePosition_Z: 25,
-        bias: shadowPosition.bias,
-        normalBias: shadowPosition.normalBias,
       }
 
       function initGUI() {
         const gui = new GUI()
-
-        gui.add(effectController, 'LightPosition_X').onChange(function(value) {
-          if (renderer.light) {
-            lightPosition[0] = value
-            renderer.light.setPosition(lightPosition)
-            lightMesh.setPosition(lightPosition)
-          }
-        })
-        gui.add(effectController, 'LightPosition_Y').onChange(function(value) {
-          if (renderer.light) {
-            lightPosition[1] = value
-            renderer.light.setPosition(lightPosition)
-            lightMesh.setPosition(lightPosition)
-          }
-        })
-        gui.add(effectController, 'LightPosition_Z').onChange(function(value) {
-          if (renderer.light) {
-            lightPosition[2] = value
-            renderer.light.setPosition(lightPosition)
-            lightMesh.setPosition(lightPosition)
-          }
-        })
-        gui.add(effectController, 'ambientIntensity').onChange(function(value) {
-          if (renderer.light) {
-            ambientLight.setIntensity(value)
-          }
-        })
-        gui.add(effectController, 'specularStrength').onChange(function(value) {
-          if (renderer.light) {
-            cubeMaterial.setSpecularStrength(value)
-            planeMaterial.setSpecularStrength(value)
-          }
-        })
-        gui.add(effectController, 'shininess').onChange(function(value) {
-          if (renderer.light) {
-            cubeMaterial.setShininess(value)
-            planeMaterial.setShininess(value)
-          }
-        })
-        gui.add(effectController, 'PCSSSearchRadius').onChange(function(value) {
-          if (renderer.isShowShadow) {
-            renderer.shadowMapComponent.PCSSSearchRadius = value
-          }
-        })
-        gui.add(effectController, 'PCSSFilterRadius').onChange(function(value) {
-          if (renderer.isShowShadow) {
-            renderer.shadowMapComponent.PCSSFilterRadius = value
-          }
-        })
-        gui.add(effectController, 'spherePosition_Z').onChange(function(value) {
-          // if (renderer.isShowShadow) {
-          spherePosition[2] = value
-          sphereMesh.setPosition(spherePosition)
-          // }
-        })
-        gui.add(effectController, 'bias').onChange(function(value) {
-          if (renderer.isShowShadow) {
-            renderer.shadowMapComponent.bias = value
-          }
-        })
-        gui.add(effectController, 'normalBias').onChange(function(value) {
-          if (renderer.isShowShadow) {
-            renderer.shadowMapComponent.normalBias = value
-          }
-        })
       }
       initGUI()
 

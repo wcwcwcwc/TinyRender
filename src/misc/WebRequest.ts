@@ -181,7 +181,7 @@ export class WebRequest implements IWebRequest {
    * Initiates the request. The optional argument provides the request body. The argument is ignored if request method is GET or HEAD
    * @param body defines an optional request body
    */
-  public send(body?: Document | XMLHttpRequestBodyInit | null): void {
+  public send(body?: any): void {
     if (WebRequest.CustomRequestHeaders) {
       this._injectCustomRequestHeaders()
     }
