@@ -47,10 +47,28 @@
       // 设置相机可交互
       renderer.addCameraOrbitControls()
 
-      let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
-      let metallicTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg');
       // 添加天空盒
       renderer.addSkyBox(environmentTexture);
+
+      let sphereMesh = new TinyRender.Mesh('sphere', {
+        radius: 15
+      })
+      let spherePosition = [0, 0, 0]
+      sphereMesh.setPosition(spherePosition)
+
+      let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
+
+      let metallicRoughnessTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg');
+
+      // pbr材质
+      let pbr = new TinyRender.PBRMaterial({
+        baseColor:'rgb(1.0, 0.766, 0.336)',
+        metallicRoughnessTexture:metallicRoughnessTexture,
+      });
+      sphereMesh.material = pbr
+
+
+
 
       // gui
       const effectController = {

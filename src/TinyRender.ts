@@ -10,6 +10,7 @@ import SpotLight from './light/SpotLight'
 import DirectionLight from './light/DirectionLight'
 import HDRCubeTexture from './texture/HDRCubeTexture'
 import Texture2D from './texture/Texture2D'
+import PBRMaterial from './geometry/PBRMaterial'
 
 export default {
   Engine,
@@ -23,5 +24,6 @@ export default {
   SpotLight,
   DirectionLight,
   HDRCubeTexture,
-  Texture2D
+  Texture2D,
+  PBRMaterial
 }
