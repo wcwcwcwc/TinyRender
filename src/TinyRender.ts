@@ -11,6 +11,8 @@ import DirectionLight from './light/DirectionLight'
 import HDRCubeTexture from './texture/HDRCubeTexture'
 import Texture2D from './texture/Texture2D'
 import PBRMaterial from './geometry/PBRMaterial'
+import { Color3, Color4 } from './math/Color'
+import CONSTANTS from './texture/constants'
 
 export default {
   Engine,
@@ -25,5 +27,8 @@ export default {
   DirectionLight,
   HDRCubeTexture,
   Texture2D,
-  PBRMaterial
+  PBRMaterial,
+  Color3,
+  Color4,
+  CONSTANTS
 }

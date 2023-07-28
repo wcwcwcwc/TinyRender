@@ -4,7 +4,7 @@ import { loadImage } from '../misc/Ajax'
 type Nullable<T> = T | null
 
 // 纹理参数选项
-interface TextureParametersOptions {
+export interface TextureParametersOptions {
   isSRGB: boolean
   target: number
   magFilter: number
@@ -85,7 +85,18 @@ export default class Texture {
     this.type =
       (TextureParametersOptions && TextureParametersOptions.type) ||
       this.gl.UNSIGNED_BYTE
+
     this.noMipmap = true
+    if (
+      TextureParametersOptions &&
+      TextureParametersOptions.noMipmap === false
+    ) {
+      this.noMipmap = false
+    }
+
+    if (this.url.indexOf('jpg') > -1 && !this.isSRGB) {
+      this.internalFormat = this.format = this.gl.RGB
+    }
     //  this.createTexture()
     // this.loadTexture()
   }
@@ -93,6 +104,13 @@ export default class Texture {
     this.webglTexture = this.gl.createTexture()
   }
   updateTexture() {
+    if (!this.noMipmap) {
+      this.minFilter = this.gl.LINEAR_MIPMAP_LINEAR
+      this.magFilter = this.gl.LINEAR
+    } else {
+      this.minFilter = this.gl.LINEAR
+      this.magFilter = this.gl.LINEAR
+    }
     const {
       gl,
       target,
@@ -107,7 +125,7 @@ export default class Texture {
       height
     } = this
     gl.bindTexture(target, this.webglTexture)
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.unpackFlipY)
     gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, magFilter)
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
     gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
@@ -144,6 +162,7 @@ export default class Texture {
     let width = img.width || this.width
     let height = img.height || this.height
     gl.bindTexture(target, this.webglTexture)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.unpackFlipY)
     gl.texImage2D(
       target,
       0,
@@ -155,6 +174,9 @@ export default class Texture {
       type,
       img
     )
+    if (!this.noMipmap) {
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP)
+    }
     gl.bindTexture(target, null)
     this.loaded = true
   }

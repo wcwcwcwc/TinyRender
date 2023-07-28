@@ -326,12 +326,15 @@ export default class Engine {
       } else {
         this._gl.depthMask(false)
       }
-      this._gl.drawElements(
-        this._gl.TRIANGLES,
-        mesh.indexBuffer.count,
-        this._gl.UNSIGNED_SHORT,
-        0
-      )
+      if (material.isReadyToDraw) {
+        this._gl.drawElements(
+          this._gl.TRIANGLES,
+          mesh.indexBuffer.count,
+          this._gl.UNSIGNED_SHORT,
+          0
+        )
+      }
+
       mesh.vao.unbind()
     }
   }

@@ -28,6 +28,9 @@ export default class Material {
     this.color = color
     this.colorArray = rgbaToArray(this.color)
   }
+  isReadyToDraw() {
+    return true
+  }
   // render完成，收集依赖，建立缓存
   initProgram(gl: any, engine: any) {
     if (!this.program) {
@@ -97,7 +100,9 @@ export default class Material {
     let g = color[1]
     let b = color[2]
     let a = color[3]
-    gl.uniform4f(uniformLocations['u_color'], r, g, b, a)
+    if (uniformLocations['u_color']) {
+      gl.uniform4f(uniformLocations['u_color'], r, g, b, a)
+    }
   }
 
   replaceInclude(shader: string): string {

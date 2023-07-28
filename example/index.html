@@ -41,14 +41,11 @@
         },
         renderer.canvas
       )
-      camera.setPosition([0,0,100])
+      camera.setPosition([0,0,-50])
       camera.lookAt = [0, 0, 0]
       renderer.addCamera(camera)
       // 设置相机可交互
       renderer.addCameraOrbitControls()
-
-      // 添加天空盒
-      renderer.addSkyBox(environmentTexture);
 
       let sphereMesh = new TinyRender.Mesh('sphere', {
         radius: 15
@@ -58,17 +55,27 @@
 
       let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
 
-      let metallicRoughnessTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg');
+      let metallicRoughnessTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg',{
+        noMipmap:true,
+        wrapS:TinyRender.CONSTANTS.REPEAT,
+        wrapT:TinyRender.CONSTANTS.REPEAT});
+
+      let envBRDFTexture = new TinyRender.Texture2D(renderer,'./assets/texture/uncorrelatedBRDF_RGBD.png',{
+        unpackFlipY:true
+      });
 
       // pbr材质
       let pbr = new TinyRender.PBRMaterial({
-        baseColor:'rgb(1.0, 0.766, 0.336)',
+        baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
         metallicRoughnessTexture:metallicRoughnessTexture,
+        reflectionTexture:environmentTexture,
+        environmentBRDFTexture:envBRDFTexture
       });
       sphereMesh.material = pbr
 
-
-
+      // 添加天空盒
+      renderer.addSkyBox(environmentTexture);
+      renderer.addMesh(sphereMesh)
 
       // gui
       const effectController = {
@@ -82,7 +89,6 @@
       function animate() {
         requestAnimationFrame(animate)
         renderer.render()
-        // console.log(renderer.camera.camera)
       }
 
       // renderer.render();
