@@ -12,7 +12,7 @@ import HDRCubeTexture from './texture/HDRCubeTexture'
 import Texture2D from './texture/Texture2D'
 import PBRMaterial from './geometry/PBRMaterial'
 import { Color3, Color4 } from './math/Color'
-import CONSTANTS from './texture/constants'
+import CONSTANTS from './texture/Constants'
 
 export default {
   Engine,
