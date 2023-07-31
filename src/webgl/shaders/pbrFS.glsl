@@ -180,6 +180,10 @@ vec3 getReflectanceFromBRDFLookup(const vec3 specularEnvironmentR0, const vec3 s
 }
 
 vec3 irradiance(samplerCube inputTexture, vec3 inputN, vec2 filteringInfo) {
+    // 实时求取BRDF的漫反射部分，采用了半球的余弦重要性采样，pdf为：cosΘ/PI
+    // 但是：余弦权重的半球采样只考虑了PDF曲线的本身，忽略了IBL贴图的实际内容，因为需要根据PDF对环境贴图进行平均采样
+    // 这里采用平均的一个方法：mipmap。核心是计算lod，目标是减少采样次数
+    // 参考：https://dcgi.fel.cvut.cz/publications/2008/krivanek-cgf-rts
     vec3 n = normalize(inputN);
     vec3 result = vec3(0.0);
     vec3 tangent = abs(n.z)<0.999 ? vec3(0., 0., 1.) : vec3(1., 0., 0.);
@@ -188,11 +192,14 @@ vec3 irradiance(samplerCube inputTexture, vec3 inputN, vec2 filteringInfo) {
     mat3 tbn = mat3(tangent, bitangent, n);
     float maxLevel = filteringInfo.y;
     float dim0 = filteringInfo.x;
+    // 单位像素对应多少立体角
     float omegaP = (4.*PI)/(6.*dim0*dim0);
     for(uint i = 0u;
     i<NUM_SAMPLES;
     ++i) {
+        // hammersley求取[0-1]低差异随机数
         vec2 Xi = hammersley(i, NUM_SAMPLES);
+        // 余弦半球采样，将二维平面的随机[0-1]转换为三维球面上的权重为余弦的xyz向量
         vec3 Ls = hemisphereCosSample(Xi);
         Ls = normalize(Ls);
         vec3 Ns = vec3(0., 0., 1.);
@@ -200,6 +207,7 @@ vec3 irradiance(samplerCube inputTexture, vec3 inputN, vec2 filteringInfo) {
         if (NoL>0.) {
             float pdf_inversed = PI/NoL;
             float omegaS = NUM_SAMPLES_FLOAT_INVERSED*pdf_inversed;
+            // 总立体角/单位像素对应多少立体角 = 需要计算的像素 = level
             float l = log4(omegaS)-log4(omegaP)+log4(K);
             float mipLevel = clamp(l, 0.0, maxLevel);
             vec3 c = textureLod(inputTexture, tbn*Ls, mipLevel).rgb;

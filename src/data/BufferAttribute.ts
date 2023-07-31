@@ -1,4 +1,4 @@
-import { StaticDrawUsage } from '../constants.js'
+import { StaticDrawUsage } from '../Constants.js'
 import {
   VertexBuffer,
   IndexBuffer,
