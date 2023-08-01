@@ -7,6 +7,8 @@ import pbrFS from '../webgl/shaders/pbrFS.glsl'
 import pbrVS from '../webgl/shaders/pbrVS.glsl'
 import Program from '../webgl/Program'
 import { Color3, Color4 } from '../math/Color'
+import TextureCube from '../texture/TextureCube'
+import Engine from '../engine/Engine'
 
 // 该类默认金属工作流
 
@@ -25,6 +27,7 @@ interface PBRMaterialOptions {
   environmentIntensity: number
   specularIntensity: number
   reflectionColor: Color3
+  irradianceMapEnabled: boolean
 }
 
 export default class PBRMaterial extends Material {
@@ -45,7 +48,10 @@ export default class PBRMaterial extends Material {
   public emissiveIntensity: number = 1.0
   public environmentIntensity: number = 1.0
   public specularIntensity: number = 1.0
-  constructor(options: PBRMaterialOptions) {
+  public irradianceMapTexture: TextureCube
+  private _irradianceMapEnabled: boolean = false
+  public engine: Engine
+  constructor(engine: Engine, options: PBRMaterialOptions) {
     super({
       color: options.baseColor.toString()
     })
@@ -62,6 +68,38 @@ export default class PBRMaterial extends Material {
     this.metallicRoughnessTexture = options.metallicRoughnessTexture
     this.reflectionTexture = options.reflectionTexture
     this.environmentBRDFTexture = options.environmentBRDFTexture
+    // 默认实时计算漫反射部分，不采用irradianceMap预计算
+    this.irradianceMapEnabled = options.irradianceMapEnabled || false
+    this.engine = engine
+  }
+  /**
+   * 是否开启irradianceMap
+   */
+  public get irradianceMapEnabled(): boolean {
+    return this._irradianceMapEnabled
+  }
+  /**
+   * 设置是否开启irradianceMap
+   */
+  public set irradianceMapEnabled(value: boolean) {
+    this._irradianceMapEnabled = value
+    if (value) {
+      this.createIrradianceMap()
+    }
+  }
+
+  /**
+   * 生成irradianceMap
+   * 1. 创建FBO
+   * 2. 创建irradianceMap cubeMap
+   * 3. 遍历6个面，绑定FBO的纹理
+   * 4. 根据面，计算法向量
+   * 5. 多次采样取平均计算irradianceMap
+   */
+  createIrradianceMap() {
+    if (!this.irradianceMapTexture) {
+      this.irradianceMapTexture = new TextureCube(this.engine, '')
+    }
   }
   isReadyToDraw() {
     return this.reflectionTexture.loaded && this.environmentBRDFTexture.loaded

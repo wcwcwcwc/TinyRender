@@ -3,12 +3,16 @@ import shadowMapVertexDeclaration from './shadersInclude/shadowMapVertexDeclarat
 import shadowMapVertex from './shadersInclude/shadowMapVertex.glsl'
 import shadowMapFragmentDeclaration from './shadersInclude/shadowMapFragmentDeclaration.glsl'
 import shadowMapFragment from './shadersInclude/shadowMapFragment.glsl'
-import commonFragmentDeclaration from './shadersInclude/commonFragmentDeclaration..glsl'
+import commonFragmentDeclaration from './shadersInclude/commonFragmentDeclaration.glsl'
+import hammersleyFragmentDeclaration from './shadersInclude/hammersleyFragmentDeclaration.glsl'
+import importanceSampleDeclaration from './shadersInclude/importanceSampleDeclaration.glsl'
 
 export const ShaderInclude: any = {
   shadowMapVertexDeclaration,
   shadowMapVertex,
   shadowMapFragmentDeclaration,
   shadowMapFragment,
-  commonFragmentDeclaration
+  commonFragmentDeclaration,
+  hammersleyFragmentDeclaration,
+  importanceSampleDeclaration
 }

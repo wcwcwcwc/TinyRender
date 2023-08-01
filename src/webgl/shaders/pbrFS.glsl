@@ -22,6 +22,10 @@ out vec4 glFragColor;
 
 #include <commonFragmentDeclaration>
 
+#include <hammersleyFragmentDeclaration>
+
+#include <importanceSampleDeclaration>
+
 struct reflectivityOutParams {
     float microSurface;
     float roughness;
@@ -41,32 +45,6 @@ const float NUM_SAMPLES_FLOAT = float(NUM_SAMPLES);
 const float NUM_SAMPLES_FLOAT_INVERSED = 1./NUM_SAMPLES_FLOAT;
 const float K = 4.;
 
-float radicalInverse_VdC(uint bits) {
-    bits = (bits<<16u) | (bits>>16u);
-    bits = ((bits & 0x55555555u)<<1u) | ((bits & 0xAAAAAAAAu)>>1u);
-    bits = ((bits & 0x33333333u)<<2u) | ((bits & 0xCCCCCCCCu)>>2u);
-    bits = ((bits & 0x0F0F0F0Fu)<<4u) | ((bits & 0xF0F0F0F0u)>>4u);
-    bits = ((bits & 0x00FF00FFu)<<8u) | ((bits & 0xFF00FF00u)>>8u);
-    return float(bits)*2.3283064365386963e-10;
-}
-vec2 hammersley(uint i, uint N) {
-    return vec2(float(i)/float(N), radicalInverse_VdC(i));
-}
-
-vec3 hemisphereImportanceSampleDggx(vec2 u, float a) {
-    float phi = 2.*PI*u.x;
-    float cosTheta2 = (1.-u.y)/(1.+(a+1.)*((a-1.)*u.y));
-    float cosTheta = sqrt(cosTheta2);
-    float sinTheta = sqrt(1.-cosTheta2);
-    return vec3(sinTheta*cos(phi), sinTheta*sin(phi), cosTheta);
-}
-vec3 hemisphereCosSample(vec2 u) {
-    float phi = 2.*PI*u.x;
-    float cosTheta2 = 1.-u.y;
-    float cosTheta = sqrt(cosTheta2);
-    float sinTheta = sqrt(1.-cosTheta2);
-    return vec3(sinTheta*cos(phi), sinTheta*sin(phi), cosTheta);
-}
 float normalDistributionFunction_TrowbridgeReitzGGX(float NdotH, float alphaG) {
     float a2 = square(alphaG);
     float d = NdotH*NdotH*(a2-1.0)+1.0;
@@ -275,6 +253,7 @@ void main() {
     vec3 specularEnvironmentReflectance = getReflectanceFromBRDFLookup(specularEnvironmentR0, specularEnvironmentR90, environmentBrdf);
 
     vec3 finalIrradiance = reflectionOut.environmentIrradiance;
+    // surfaceAlbedo 包含了发生漫反射的系数，即1-F0
     finalIrradiance *= surfaceAlbedo.rgb;
     finalIrradiance *= u_lightingIntensity.z;
     finalIrradiance *= ambientOcclusionColor;
