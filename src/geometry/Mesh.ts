@@ -12,7 +12,7 @@ import {
 } from '../webgl/VertexArrayObject'
 import Program from '../webgl/Program'
 
-interface Attributes {
+export interface Attributes {
   [key: string]: BufferAttribute
 }
 

@@ -10,6 +10,7 @@ export default class Program {
   public gl: any
   public attributesLocations: Location
   public uniformLocations: Location
+  public uniformInfos: any
   constructor(options: any) {
     const { gl, vs, fs } = options
     this.program = gl.createProgram()
@@ -18,6 +19,7 @@ export default class Program {
     this.fs = fs
     this.attributesLocations = {} // 记录attributes对应的location
     this.uniformLocations = {} // 记录uniform对应的location
+    this.uniformInfos = {} // 记录uniform对应的info
 
     const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)
     if (gl.isContextLost()) {
@@ -82,6 +84,7 @@ export default class Program {
       }
       let location = gl.getUniformLocation(program, name)
       this.uniformLocations[name] = location
+      this.uniformInfos[name] = info
     }
   }
 }

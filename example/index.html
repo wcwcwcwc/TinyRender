@@ -65,7 +65,7 @@
       });
 
       // pbr材质
-      let pbr = new TinyRender.PBRMaterial({
+      let pbr = new TinyRender.PBRMaterial(renderer,{
         baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
         metallicRoughnessTexture:metallicRoughnessTexture,
         reflectionTexture:environmentTexture,

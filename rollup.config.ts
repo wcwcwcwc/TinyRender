@@ -77,7 +77,7 @@ export default {
       port: 8080,
       openPage: '/example/index.html', // 打开的页面
       contentBase: '',
-      host:'192.168.76.22'
+      // host:'192.168.76.22'
     }),
     // livereload({
     //   watch: 'example',
