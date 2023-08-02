@@ -5,19 +5,19 @@ type Nullable<T> = T | null
 
 // 纹理参数选项
 export interface TextureParametersOptions {
-  isSRGB: boolean
-  target: number
-  magFilter: number
-  minFilter: number
-  wrapS: number
-  wrapT: number
-  unpackFlipY: boolean
-  width: number
-  height: number
-  internalFormat: number
-  format: number
-  type: number
-  noMipmap: boolean
+  isSRGB?: boolean
+  target?: number
+  magFilter?: number
+  minFilter?: number
+  wrapS?: number
+  wrapT?: number
+  unpackFlipY?: boolean
+  width?: number
+  height?: number
+  internalFormat?: number
+  format?: number
+  type?: number
+  noMipmap?: boolean
 }
 
 /**
@@ -192,11 +192,41 @@ export default class Texture {
       this.minFilter = this.gl.LINEAR
       this.magFilter = this.gl.LINEAR
     }
-    const { gl, target, magFilter, minFilter, wrapS, wrapT } = this
+    this.format = this.gl.RGBA32F
+    this.internalFormat = this.gl.RGBA
+    this.type = this.gl.FLOAT
+    this.target = this.gl.TEXTURE_CUBE_MAP
+    const {
+      gl,
+      target,
+      magFilter,
+      minFilter,
+      wrapS,
+      wrapT,
+      internalFormat,
+      format,
+      type,
+      width,
+      height
+    } = this
     gl.texParameteri(target, gl.TEXTURE_MAG_FILTER, magFilter)
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
     gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
     gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT)
+
+    for (let face = 0; face < 6; face++) {
+      gl.texImage2D(
+        gl.TEXTURE_CUBE_MAP_POSITIVE_X + face,
+        0,
+        format,
+        width,
+        height,
+        0,
+        internalFormat,
+        type,
+        null
+      )
+    }
     gl.bindTexture(this.target, null)
   }
 

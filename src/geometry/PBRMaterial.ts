@@ -5,10 +5,13 @@ import Texture from '../texture/Texture'
 import pbrFS from '../webgl/shaders/pbrFS.glsl'
 //@ts-ignore
 import pbrVS from '../webgl/shaders/pbrVS.glsl'
+//@ts-ignore
+import irradianceMapFS from '../webgl/shaders/irradianceMapFS.glsl'
 import Program from '../webgl/Program'
 import { Color3, Color4 } from '../math/Color'
 import TextureCube from '../texture/TextureCube'
 import Engine from '../engine/Engine'
+import EffectMaterial from './EffectMaterial'
 
 // 该类默认金属工作流
 
@@ -49,8 +52,11 @@ export default class PBRMaterial extends Material {
   public environmentIntensity: number = 1.0
   public specularIntensity: number = 1.0
   public irradianceMapTexture: TextureCube
+  public gl: any
   private _irradianceMapEnabled: boolean = false
   public engine: Engine
+  public effectFrameBufferObject: WebGLFramebuffer
+  public effecter: EffectMaterial
   constructor(engine: Engine, options: PBRMaterialOptions) {
     super({
       color: options.baseColor.toString()
@@ -71,6 +77,7 @@ export default class PBRMaterial extends Material {
     // 默认实时计算漫反射部分，不采用irradianceMap预计算
     this.irradianceMapEnabled = options.irradianceMapEnabled || false
     this.engine = engine
+    this.gl = engine._gl
   }
   /**
    * 是否开启irradianceMap
@@ -98,7 +105,53 @@ export default class PBRMaterial extends Material {
    */
   createIrradianceMap() {
     if (!this.irradianceMapTexture) {
-      this.irradianceMapTexture = new TextureCube(this.engine, '')
+      // todo:合并到FrameBufferObject.js中
+      this.effectFrameBufferObject = this.gl.createFramebuffer()
+      // 绑定到当前FBO
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
+
+      // 创建irradianceMap cubeMap
+      this.irradianceMapTexture = new TextureCube(this.engine, '', {
+        width: 512,
+        height: 512,
+        noMipmap: false
+      })
+      const textureWidth = this.irradianceMapTexture.width
+      const mipmapsCount = Math.round(Math.log(textureWidth) * Math.LOG2E)
+
+      // 创建基于屏幕的纹理贴图材质
+      this.effecter = new EffectMaterial(this.engine, {
+        name: 'irradianceMap',
+        fragment: irradianceMapFS,
+        uniformNames: {
+          u_face: 0,
+          u_reflectionSampler: this.reflectionTexture,
+          u_textureInfo: [textureWidth, mipmapsCount]
+        }
+      })
+      for (let face = 0; face < 6; face++) {
+        this.gl.viewport(0, 0, textureWidth, textureWidth)
+        this.gl.clearColor(1, 1, 1, 1.0)
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT)
+        this.gl.clear(this.gl.DEPTH_BUFFER_BIT)
+        this.gl.clear(this.gl.STENCIL_BUFFER_BIT)
+        this.gl.framebufferTexture2D(
+          this.gl.FRAMEBUFFER,
+          this.gl.COLOR_ATTACHMENT0,
+          this.gl.TEXTURE_CUBE_MAP_POSITIVE_X + face,
+          this.irradianceMapTexture.webglTexture,
+          0
+        )
+        // 更新uniform
+        this.effecter.updateUniform({
+          u_face: face
+        })
+        // 渲染
+        this.effecter.render()
+      }
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+
+      // blit mode
     }
   }
   isReadyToDraw() {

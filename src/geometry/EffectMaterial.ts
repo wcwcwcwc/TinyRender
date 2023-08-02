@@ -26,8 +26,8 @@ interface Uniform {
 interface EffectMaterialOptions {
   name: string
   fragment: any
-  vertex: any
-  samplerNames: Uniform
+  vertex?: any
+  samplerNames?: Uniform
   uniformNames: Uniform
 }
 export default class EffectMaterial {
@@ -201,6 +201,15 @@ export default class EffectMaterial {
     this.gl.useProgram(this.program.program)
     this.vao = new VertexArrayObject(this.gl)
     this.vao.packUp(this.vertexBufferArray, this.indexBuffer)
+  }
+  /**
+   * 更新uniform
+   * @param uniform
+   */
+  public updateUniform(uniform: Uniform) {
+    this.uniformNames = {
+      ...uniform
+    }
   }
   /**
    * 渲染
