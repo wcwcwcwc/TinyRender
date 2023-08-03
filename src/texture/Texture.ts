@@ -227,6 +227,9 @@ export default class Texture {
         null
       )
     }
+    if (!this.noMipmap) {
+      gl.generateMipmap(gl.TEXTURE_CUBE_MAP)
+    }
     gl.bindTexture(this.target, null)
   }
 

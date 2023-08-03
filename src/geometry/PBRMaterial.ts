@@ -7,6 +7,8 @@ import pbrFS from '../webgl/shaders/pbrFS.glsl'
 import pbrVS from '../webgl/shaders/pbrVS.glsl'
 //@ts-ignore
 import irradianceMapFS from '../webgl/shaders/irradianceMapFS.glsl'
+//@ts-ignore
+import blitCubeFS from '../webgl/shaders/blitCubeFS.glsl'
 import Program from '../webgl/Program'
 import { Color3, Color4 } from '../math/Color'
 import TextureCube from '../texture/TextureCube'
@@ -57,6 +59,7 @@ export default class PBRMaterial extends Material {
   public engine: Engine
   public effectFrameBufferObject: WebGLFramebuffer
   public effecter: EffectMaterial
+  public blitIrradianceMapEffecter: EffectMaterial
   constructor(engine: Engine, options: PBRMaterialOptions) {
     super({
       color: options.baseColor.toString()
@@ -91,7 +94,15 @@ export default class PBRMaterial extends Material {
   public set irradianceMapEnabled(value: boolean) {
     this._irradianceMapEnabled = value
     if (value) {
-      this.createIrradianceMap()
+      // 环境贴图未加载时，需要添加进贴图完成回调中
+      if (!this.reflectionTexture.loaded) {
+        this.reflectionTexture.addLoadedCallback(
+          this.createIrradianceMap.bind(this)
+        )
+      } else {
+        //环境贴图加载完成，直接生成irradianceMap
+        this.createIrradianceMap()
+      }
     }
   }
 
@@ -106,35 +117,42 @@ export default class PBRMaterial extends Material {
   createIrradianceMap() {
     if (!this.irradianceMapTexture) {
       // todo:合并到FrameBufferObject.js中
-      this.effectFrameBufferObject = this.gl.createFramebuffer()
+      if (!this.effectFrameBufferObject) {
+        this.effectFrameBufferObject = this.gl.createFramebuffer()
+      }
+
       // 绑定到当前FBO
       this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
 
       // 创建irradianceMap cubeMap
-      this.irradianceMapTexture = new TextureCube(this.engine, '', {
-        width: 512,
-        height: 512,
-        noMipmap: false
-      })
+      if (!this.irradianceMapTexture) {
+        this.irradianceMapTexture = new TextureCube(this.engine, '', {
+          width: 512,
+          height: 512,
+          noMipmap: false
+        })
+      }
       const textureWidth = this.irradianceMapTexture.width
       const mipmapsCount = Math.round(Math.log(textureWidth) * Math.LOG2E)
 
       // 创建基于屏幕的纹理贴图材质
-      this.effecter = new EffectMaterial(this.engine, {
-        name: 'irradianceMap',
-        fragment: irradianceMapFS,
-        uniformNames: {
-          u_face: 0,
-          u_reflectionSampler: this.reflectionTexture,
-          u_textureInfo: [textureWidth, mipmapsCount]
-        }
-      })
+      if (!this.effecter) {
+        this.effecter = new EffectMaterial(this.engine, {
+          name: 'irradianceMap',
+          fragment: irradianceMapFS,
+          uniformNames: {
+            u_face: 0,
+            u_reflectionSampler: this.reflectionTexture,
+            u_textureInfo: [textureWidth, mipmapsCount]
+          }
+        })
+      }
+
       for (let face = 0; face < 6; face++) {
+        // this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
         this.gl.viewport(0, 0, textureWidth, textureWidth)
-        this.gl.clearColor(1, 1, 1, 1.0)
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT)
-        this.gl.clear(this.gl.DEPTH_BUFFER_BIT)
-        this.gl.clear(this.gl.STENCIL_BUFFER_BIT)
+
+        // console.log(this.irradianceMapTexture.webglTexture)
         this.gl.framebufferTexture2D(
           this.gl.FRAMEBUFFER,
           this.gl.COLOR_ATTACHMENT0,
@@ -150,8 +168,25 @@ export default class PBRMaterial extends Material {
         this.effecter.render()
       }
       this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+      this.irradianceMapTexture.loaded = true
 
       // blit mode
+      // blit仅用作测试 ================================================================
+
+      // if (!this.blitIrradianceMapEffecter) {
+      //   this.blitIrradianceMapEffecter = new EffectMaterial(this.engine, {
+      //     name: 'irradianceMapBlit',
+      //     fragment: blitCubeFS,
+      //     uniformNames: {
+      //       u_lod: 0,
+      //       u_textureSampler: this.irradianceMapTexture,
+      //       u_reflectionSampler: this.reflectionTexture,
+      //     }
+      //   })
+      // }
+      // this.gl.viewport(0, 0, 2048, 2048)
+      // this.blitIrradianceMapEffecter.render()
+      //  =============================================================================
     }
   }
   isReadyToDraw() {

@@ -1,7 +1,11 @@
-varying vec2 v_vUV;
+in vec2 v_vUV;
 uniform float u_face;
 uniform samplerCube u_reflectionSampler;
 uniform vec2 u_textureInfo;
+
+out vec4 outColor;
+
+#include <commonFragmentDeclaration>
 
 #include <hammersleyFragmentDeclaration>
 
@@ -11,7 +15,6 @@ const uint SAMPLE_COUNT = 4096u;
 
 const float SAMPLE_COUNT_FLOAT = float(SAMPLE_COUNT);
 const float SAMPLE_COUNT_FLOAT_INVERSED = 1. / SAMPLE_COUNT_FLOAT;
-const float PI = 3.1415926535897932384626433832795;
 
 const float K = 4.;
 
@@ -91,5 +94,5 @@ void main()
 
     vec3 integratedBRDF = irradiance(dir);
 
-    gl_FragColor = vec4(integratedBRDF, 1.);
+    outColor = vec4(integratedBRDF, 1.);
 }

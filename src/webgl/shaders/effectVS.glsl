@@ -1,6 +1,6 @@
-attribute vec2 a_position;
+in vec2 a_position;
 
-varying vec2 v_vUV;
+out vec2 v_vUV;
 
 const vec2 madd = vec2(0.5, 0.5);
 

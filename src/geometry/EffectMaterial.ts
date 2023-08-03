@@ -41,9 +41,9 @@ export default class EffectMaterial {
   public uniformNames: Uniform
   public positions: number[]
   public indices: number[]
-  public attributes: Attributes
+  public attributes: Attributes = {}
   public index: BufferAttribute
-  public vertexBufferArray: VertexBuffer[]
+  public vertexBufferArray: VertexBuffer[] = []
   public indexBuffer: IndexBuffer
   public vao: VertexArrayObject
   constructor(engine: Engine, options: EffectMaterialOptions) {
@@ -65,7 +65,7 @@ export default class EffectMaterial {
     this.indices = [0, 1, 2, 0, 2, 3]
     this.attributes['a_position'] = new BufferAttribute(
       new Float32Array(this.positions),
-      3,
+      2,
       false
     )
     this.index = new BufferAttribute(new Uint16Array(this.indices), 1, false)
@@ -126,7 +126,7 @@ export default class EffectMaterial {
         switch (type) {
           // FLOAT
           case 0x1406:
-            if (uniformValue instanceof Number)
+            if (!isNaN(uniformValue as number))
               gl.uniform1f(uniformLocation, uniformValue)
             break
           // VEC2
@@ -188,6 +188,7 @@ export default class EffectMaterial {
    * vao绑定
    */
   private bindVao(): void {
+    this.vertexBufferArray = []
     let { attributesLocations, uniformLocations } = this.program
     let vertexBuffer = new VertexBuffer(
       this.gl,
@@ -208,6 +209,7 @@ export default class EffectMaterial {
    */
   public updateUniform(uniform: Uniform) {
     this.uniformNames = {
+      ...this.uniformNames,
       ...uniform
     }
   }

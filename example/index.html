@@ -71,6 +71,7 @@
         reflectionTexture:environmentTexture,
         environmentBRDFTexture:envBRDFTexture
       });
+      pbr.irradianceMapEnabled = true
       sphereMesh.material = pbr
 
       // 添加天空盒
@@ -88,10 +89,12 @@
 
       function animate() {
         requestAnimationFrame(animate)
+        // pbr.irradianceMapEnabled = true
         renderer.render()
       }
 
       // renderer.render();
+
       animate()
       console.log(renderer)
     </script>
