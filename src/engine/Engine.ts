@@ -302,40 +302,39 @@ export default class Engine {
       this._gl.useProgram(program.program)
       mesh.vao = new VertexArrayObject(this._gl)
       mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
+      if (material.isReadyToDraw()) {
+        // uniform = base_uniform + material_uniform + effect_uniform
+        // base_uniform: 通用uniform,在基类material完成，包括了如MVP、color在内的通用uniform
+        // material_uniform: 材质类uniform，在子类material完成，如phong材质中的specularStrength、shininess等
+        // effect_uniform: 效果类uniform，在效果子类material完成，如shadowMap中的lightMatrix等
+        // 绑定uniform：base_uniform + material_uniform
+        material.bindUniform(this, mesh)
+        // 效果类uniform绑定：shadowMap
+        if (this.isShowShadow && this.shadowMapComponent.pass === 2) {
+          this.shadowMapComponent.material.bindShadowMapUniform(
+            this,
+            uniformLocations
+          )
+        }
 
-      // uniform = base_uniform + material_uniform + effect_uniform
-      // base_uniform: 通用uniform,在基类material完成，包括了如MVP、color在内的通用uniform
-      // material_uniform: 材质类uniform，在子类material完成，如phong材质中的specularStrength、shininess等
-      // effect_uniform: 效果类uniform，在效果子类material完成，如shadowMap中的lightMatrix等
-      // 绑定uniform：base_uniform + material_uniform
-      material.bindUniform(this, mesh)
-      // 效果类uniform绑定：shadowMap
-      if (this.isShowShadow && this.shadowMapComponent.pass === 2) {
-        this.shadowMapComponent.material.bindShadowMapUniform(
-          this,
-          uniformLocations
-        )
-      }
+        // draw
+        mesh.vao.bind()
+        this._gl.enable(this._gl.DEPTH_TEST)
+        this._gl.depthFunc(this._gl.LEQUAL)
+        if (mesh.material.opacity === 1) {
+          this._gl.depthMask(true)
+        } else {
+          this._gl.depthMask(false)
+        }
 
-      // draw
-      mesh.vao.bind()
-      this._gl.enable(this._gl.DEPTH_TEST)
-      this._gl.depthFunc(this._gl.LEQUAL)
-      if (mesh.material.opacity === 1) {
-        this._gl.depthMask(true)
-      } else {
-        this._gl.depthMask(false)
-      }
-      if (material.isReadyToDraw) {
         this._gl.drawElements(
           this._gl.TRIANGLES,
           mesh.indexBuffer.count,
           this._gl.UNSIGNED_SHORT,
           0
         )
+        mesh.vao.unbind()
       }
-
-      mesh.vao.unbind()
     }
   }
 }

@@ -13,6 +13,9 @@ uniform vec3 u_ambientColor;
 uniform vec3 u_emissiveColor;
 uniform vec4 u_lightingIntensity;
 
+#ifdef IRRADIANCEMAP_ENABLED
+    uniform samplerCube u_irradianceMapSampler;
+#endif
 
 
 in vec3 v_worldPosition;
@@ -210,7 +213,14 @@ in vec3 vPositionW, in vec3 normalW, in float alphaG, in vec3 vReflectionMicrosu
     );
     vec3 environmentIrradiance = vec3(0., 0., 0.);
     vec3 irradianceVector = vec3(reflectionMatrix*vec4(normalW, 0)).xyz;
-    environmentIrradiance = irradiance(reflectionSampler, irradianceVector, vReflectionFilteringInfo);
+
+    #ifdef IRRADIANCEMAP_ENABLED
+        vec3 n = normalize(irradianceVector);
+        environmentIrradiance = textureLod(u_irradianceMapSampler, n, 0.0).rgb;
+    #else
+        environmentIrradiance = irradiance(reflectionSampler, irradianceVector, vReflectionFilteringInfo);
+    #endif
+    
     environmentIrradiance *= vReflectionColor.rgb;
     outParams.environmentRadiance = environmentRadiance;
     outParams.environmentIrradiance = environmentIrradiance;

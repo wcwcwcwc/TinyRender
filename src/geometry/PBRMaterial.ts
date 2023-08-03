@@ -190,10 +190,22 @@ export default class PBRMaterial extends Material {
     }
   }
   isReadyToDraw() {
-    return this.reflectionTexture.loaded && this.environmentBRDFTexture.loaded
+    if (!this.reflectionTexture.loaded) {
+      return false
+    }
+
+    if (!this.environmentBRDFTexture.loaded) {
+      return false
+    }
+
+    if (this._irradianceMapEnabled && !this.irradianceMapTexture.loaded) {
+      return false
+    }
+    return true
   }
   initProgram(gl: any, engine: any) {
     if (!this.program) {
+      this.defines = []
       let vs_source = pbrVS
       let fs_source = pbrFS
       let headShader_vs = [`#version 300 es`]
@@ -203,6 +215,13 @@ export default class PBRMaterial extends Material {
       ]
       vs_source = this.replaceInclude(vs_source)
       fs_source = this.replaceInclude(fs_source)
+
+      if (this._irradianceMapEnabled) {
+        this.defines.push('#define IRRADIANCEMAP_ENABLED')
+      }
+
+      headShader_vs = headShader_vs.concat(this.defines)
+      headShader_fs = headShader_fs.concat(this.defines)
 
       vs_source = headShader_vs.concat(vs_source).join('\n')
       fs_source = headShader_fs.concat(fs_source).join('\n')
@@ -256,6 +275,14 @@ export default class PBRMaterial extends Material {
         gl.activeTexture(gl.TEXTURE2)
         gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.reflectionTexture.webglTexture)
         gl.uniform1i(uniformLocation, 2)
+      }
+      if (key === 'u_irradianceMapSampler') {
+        gl.activeTexture(gl.TEXTURE3)
+        gl.bindTexture(
+          gl.TEXTURE_CUBE_MAP,
+          this.irradianceMapTexture.webglTexture
+        )
+        gl.uniform1i(uniformLocation, 3)
       }
       if (key === 'u_metallicReflectanceFactors') {
         gl.uniform4f(uniformLocation, this.f0, this.f0, this.f0, this.f90)
