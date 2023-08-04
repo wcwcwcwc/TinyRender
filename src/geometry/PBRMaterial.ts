@@ -8,6 +8,8 @@ import pbrVS from '../webgl/shaders/pbrVS.glsl'
 //@ts-ignore
 import irradianceMapFS from '../webgl/shaders/irradianceMapFS.glsl'
 //@ts-ignore
+import prefilteredEnvironmentMapFS from '../webgl/shaders/prefilteredEnvironmentMapFS.glsl'
+//@ts-ignore
 import blitCubeFS from '../webgl/shaders/blitCubeFS.glsl'
 import Program from '../webgl/Program'
 import { Color3, Color4 } from '../math/Color'
@@ -54,12 +56,19 @@ export default class PBRMaterial extends Material {
   public environmentIntensity: number = 1.0
   public specularIntensity: number = 1.0
   public irradianceMapTexture: TextureCube
+  public prefilteredEnvironmentMapTexture: TextureCube
   public gl: any
-  private _irradianceMapEnabled: boolean = false
   public engine: Engine
   public effectFrameBufferObject: WebGLFramebuffer
   public effecter: EffectMaterial
+  public prefilteredEnvironmentMapEffecter: EffectMaterial
   public blitIrradianceMapEffecter: EffectMaterial
+
+  private _irradianceMapEnabled: boolean = false
+  private _prefilteredEnvironmentMapEnabled: boolean = false
+  private readonly _lodGenerationOffset = 0
+  private readonly _lodGenerationScale = 0.8
+
   constructor(engine: Engine, options: PBRMaterialOptions) {
     super({
       color: options.baseColor.toString()
@@ -82,6 +91,31 @@ export default class PBRMaterial extends Material {
     this.engine = engine
     this.gl = engine._gl
   }
+
+  /**
+   * 是否开启prefilteredEnvironmentMap
+   */
+  public get prefilteredEnvironmentMapEnabled(): boolean {
+    return this._prefilteredEnvironmentMapEnabled
+  }
+  /**
+   * 设置是否开启prefilteredEnvironmentMap
+   */
+  public set prefilteredEnvironmentMapEnabled(value: boolean) {
+    this._prefilteredEnvironmentMapEnabled = value
+    if (value) {
+      // 环境贴图未加载时，需要添加进贴图完成回调中
+      if (!this.reflectionTexture.loaded) {
+        this.reflectionTexture.addLoadedCallback(
+          this.createPrefilteredEnvironmentMap.bind(this)
+        )
+      } else {
+        //环境贴图加载完成，直接生成irradianceMap
+        this.createPrefilteredEnvironmentMap()
+      }
+    }
+  }
+
   /**
    * 是否开启irradianceMap
    */
@@ -114,7 +148,7 @@ export default class PBRMaterial extends Material {
    * 4. 根据面，计算法向量
    * 5. 多次采样取平均计算irradianceMap
    */
-  createIrradianceMap() {
+  private createIrradianceMap() {
     if (!this.irradianceMapTexture) {
       // todo:合并到FrameBufferObject.js中
       if (!this.effectFrameBufferObject) {
@@ -189,7 +223,108 @@ export default class PBRMaterial extends Material {
       //  =============================================================================
     }
   }
-  isReadyToDraw() {
+
+  /**
+   * 生成prefilteredEnvironmentMap，用于渲染方程镜面反射部分的前半部分积分
+   * 根据粗糙度设置lod，因为每个粗糙度对应的法向量分布函数不一样
+   * 1. 创建FBO
+   * 2. 创建prefilteredEnvironmentMap cubeMap
+   * 3. 遍历6个面，每个lod，绑定FBO的纹理
+   * 4. 根据面，计算法向量
+   * 5. 根据粗糙度，多次采样取平均计算irradianceMap
+   */
+  private createPrefilteredEnvironmentMap() {
+    if (!this.prefilteredEnvironmentMapTexture) {
+      // todo:合并到FrameBufferObject.js中
+      if (!this.effectFrameBufferObject) {
+        this.effectFrameBufferObject = this.gl.createFramebuffer()
+      }
+
+      // 绑定到当前FBO
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
+
+      // 创建prefilteredEnvironmentMap cubeMap
+      if (!this.prefilteredEnvironmentMapTexture) {
+        this.prefilteredEnvironmentMapTexture = new TextureCube(
+          this.engine,
+          '',
+          {
+            width: 512,
+            height: 512,
+            noMipmap: false
+          }
+        )
+      }
+      const textureWidth = this.prefilteredEnvironmentMapTexture.width
+      const mipmapsCount = Math.round(Math.log(textureWidth) * Math.LOG2E)
+
+      // 创建基于屏幕的纹理贴图材质
+      if (!this.prefilteredEnvironmentMapEffecter) {
+        this.prefilteredEnvironmentMapEffecter = new EffectMaterial(
+          this.engine,
+          {
+            name: 'prefilteredEnvironmentMap',
+            fragment: prefilteredEnvironmentMapFS,
+            uniformNames: {
+              u_reflectionSampler: this.reflectionTexture,
+              u_textureInfo: [textureWidth, mipmapsCount]
+            }
+          }
+        )
+      }
+
+      for (let face = 0; face < 6; face++) {
+        for (let lod = 0; lod < mipmapsCount + 1; lod++) {
+          // this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
+          this.gl.viewport(0, 0, textureWidth, textureWidth)
+
+          this.gl.framebufferTexture2D(
+            this.gl.FRAMEBUFFER,
+            this.gl.COLOR_ATTACHMENT0,
+            this.gl.TEXTURE_CUBE_MAP_POSITIVE_X + face,
+            this.prefilteredEnvironmentMapTexture.webglTexture,
+            lod
+          )
+          let alpha =
+            Math.pow(
+              2,
+              (lod - this._lodGenerationOffset) / this._lodGenerationScale
+            ) / textureWidth
+          if (lod === 0) {
+            alpha = 0
+          }
+          // 更新uniform
+          this.prefilteredEnvironmentMapEffecter.updateUniform({
+            u_face: face,
+            u_linearRoughness: alpha
+          })
+          // 渲染
+          this.prefilteredEnvironmentMapEffecter.render()
+        }
+      }
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+      this.prefilteredEnvironmentMapTexture.loaded = true
+
+      // blit mode
+      // blit仅用作测试 ================================================================
+
+      // if (!this.blitIrradianceMapEffecter) {
+      //   this.blitIrradianceMapEffecter = new EffectMaterial(this.engine, {
+      //     name: 'irradianceMapBlit',
+      //     fragment: blitCubeFS,
+      //     uniformNames: {
+      //       u_lod: 4,
+      //       u_textureSampler: this.prefilteredEnvironmentMapTexture,
+      //       u_reflectionSampler: this.reflectionTexture,
+      //     }
+      //   })
+      // }
+      // this.gl.viewport(0, 0, 2048, 2048)
+      // this.blitIrradianceMapEffecter.render()
+      //  =============================================================================
+    }
+  }
+  public isReadyToDraw() {
     if (!this.reflectionTexture.loaded) {
       return false
     }
@@ -201,9 +336,16 @@ export default class PBRMaterial extends Material {
     if (this._irradianceMapEnabled && !this.irradianceMapTexture.loaded) {
       return false
     }
+
+    if (
+      this._prefilteredEnvironmentMapEnabled &&
+      !this.prefilteredEnvironmentMapTexture.loaded
+    ) {
+      return false
+    }
     return true
   }
-  initProgram(gl: any, engine: any) {
+  public initProgram(gl: any, engine: any) {
     if (!this.program) {
       this.defines = []
       let vs_source = pbrVS
@@ -219,6 +361,9 @@ export default class PBRMaterial extends Material {
       if (this._irradianceMapEnabled) {
         this.defines.push('#define IRRADIANCEMAP_ENABLED')
       }
+      if (this._prefilteredEnvironmentMapEnabled) {
+        this.defines.push('#define PREFILTEREDENVIRONMENTMAP_ENABLED')
+      }
 
       headShader_vs = headShader_vs.concat(this.defines)
       headShader_fs = headShader_fs.concat(this.defines)
@@ -233,7 +378,7 @@ export default class PBRMaterial extends Material {
     }
   }
 
-  bindUniform(engine: any, mesh: any): void {
+  public bindUniform(engine: any, mesh: any): void {
     super.bindUniform(engine, mesh)
     const { camera } = engine
     let gl = engine._gl
@@ -284,6 +429,14 @@ export default class PBRMaterial extends Material {
         )
         gl.uniform1i(uniformLocation, 3)
       }
+      if (key === 'u_prefilteredEnvironmentMapSampler') {
+        gl.activeTexture(gl.TEXTURE4)
+        gl.bindTexture(
+          gl.TEXTURE_CUBE_MAP,
+          this.prefilteredEnvironmentMapTexture.webglTexture
+        )
+        gl.uniform1i(uniformLocation, 4)
+      }
       if (key === 'u_metallicReflectanceFactors') {
         gl.uniform4f(uniformLocation, this.f0, this.f0, this.f0, this.f90)
       }
@@ -291,7 +444,12 @@ export default class PBRMaterial extends Material {
         gl.uniform4f(uniformLocation, this.metallic, this.roughness, this.f0, 1)
       }
       if (key === 'u_reflectionMicrosurfaceInfos') {
-        gl.uniform3f(uniformLocation, this.reflectionTexture.width, 0.8, 0)
+        gl.uniform3f(
+          uniformLocation,
+          this.reflectionTexture.width,
+          this._lodGenerationScale,
+          this._lodGenerationOffset
+        )
       }
       if (key === 'u_reflectionColor') {
         gl.uniform3f(
