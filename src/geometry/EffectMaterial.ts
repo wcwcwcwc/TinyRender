@@ -220,7 +220,7 @@ export default class EffectMaterial {
     this.bindVao()
     this.bindUniform()
     this.vao.bind()
-    this.gl.enable(this.gl.DEPTH_TEST)
+    this.gl.disable(this.gl.DEPTH_TEST)
     this.gl.depthFunc(this.gl.LEQUAL)
     this.gl.depthMask(true)
     this.gl.disable(this.gl.CULL_FACE)

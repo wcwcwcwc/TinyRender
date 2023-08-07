@@ -68,6 +68,7 @@ export default class PBRMaterial extends Material {
   private _prefilteredEnvironmentMapEnabled: boolean = false
   private readonly _lodGenerationOffset = 0
   private readonly _lodGenerationScale = 0.8
+  public effectPrefilteredFrameBufferObject: WebGLFramebuffer
 
   constructor(engine: Engine, options: PBRMaterialOptions) {
     super({
@@ -236,12 +237,15 @@ export default class PBRMaterial extends Material {
   private createPrefilteredEnvironmentMap() {
     if (!this.prefilteredEnvironmentMapTexture) {
       // todo:合并到FrameBufferObject.js中
-      if (!this.effectFrameBufferObject) {
-        this.effectFrameBufferObject = this.gl.createFramebuffer()
+      if (!this.effectPrefilteredFrameBufferObject) {
+        this.effectPrefilteredFrameBufferObject = this.gl.createFramebuffer()
       }
 
       // 绑定到当前FBO
-      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
+      this.gl.bindFramebuffer(
+        this.gl.FRAMEBUFFER,
+        this.effectPrefilteredFrameBufferObject
+      )
 
       // 创建prefilteredEnvironmentMap cubeMap
       if (!this.prefilteredEnvironmentMapTexture) {
@@ -275,9 +279,13 @@ export default class PBRMaterial extends Material {
 
       for (let face = 0; face < 6; face++) {
         for (let lod = 0; lod < mipmapsCount + 1; lod++) {
-          // this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.effectFrameBufferObject)
-          this.gl.viewport(0, 0, textureWidth, textureWidth)
-
+          // 视口大小根据lod计算
+          this.gl.viewport(
+            0,
+            0,
+            textureWidth * Math.pow(0.5, lod),
+            textureWidth * Math.pow(0.5, lod)
+          )
           this.gl.framebufferTexture2D(
             this.gl.FRAMEBUFFER,
             this.gl.COLOR_ATTACHMENT0,
@@ -313,7 +321,7 @@ export default class PBRMaterial extends Material {
       //     name: 'irradianceMapBlit',
       //     fragment: blitCubeFS,
       //     uniformNames: {
-      //       u_lod: 4,
+      //       u_lod: 5,
       //       u_textureSampler: this.prefilteredEnvironmentMapTexture,
       //       u_reflectionSampler: this.reflectionTexture,
       //     }

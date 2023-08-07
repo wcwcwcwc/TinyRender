@@ -161,16 +161,12 @@ vec3 radiance(float alphaG, samplerCube inputTexture, vec3 inputN, vec2 filterin
 void sampleReflectionTexture(
 in float alphaG, in vec3 vReflectionMicrosurfaceInfos, in vec2 vReflectionInfos, in vec3 vReflectionColor, in samplerCube reflectionSampler, const vec3 reflectionCoords, in vec2 vReflectionFilteringInfo, out vec4 environmentRadiance
 ) {
+    // 预过滤贴图打开的话，直接按照粗糙度作为lod，反射方向进行贴图采样
+    // 默认，则为实时渲染处理，与irradiance处理一样，计算lod，采样原贴图
     #ifdef PREFILTEREDENVIRONMENTMAP_ENABLED
-        vec3 n = normalize(reflectionCoords);
-        if (alphaG == 0.) {
-            environmentRadiance = vec4(texture(u_reflectionSampler, n).rgb, 1.0);
-        }else{
-            float reflectionLOD = getLodFromAlphaG(vReflectionMicrosurfaceInfos.x, alphaG);
-            reflectionLOD = reflectionLOD*vReflectionMicrosurfaceInfos.y+vReflectionMicrosurfaceInfos.z;
-            environmentRadiance = textureLod(u_prefilteredEnvironmentMapSampler, n, reflectionLOD);
-        }
-
+        float reflectionLOD = getLodFromAlphaG(vReflectionMicrosurfaceInfos.x, alphaG);
+        reflectionLOD = reflectionLOD*vReflectionMicrosurfaceInfos.y+vReflectionMicrosurfaceInfos.z;
+        environmentRadiance = textureLod(u_prefilteredEnvironmentMapSampler, reflectionCoords, reflectionLOD);
     #else
         environmentRadiance = vec4(radiance(alphaG, reflectionSampler, reflectionCoords, vReflectionFilteringInfo), 1.0);
     #endif
