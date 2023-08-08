@@ -130,17 +130,17 @@ export default class Texture {
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
     gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
     gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT)
-    // gl.texImage2D(
-    //   target,
-    //   0,
-    //   internalFormat,
-    //   width,
-    //   height,
-    //   0,
-    //   format,
-    //   type,
-    //   data
-    // )
+    gl.texImage2D(
+      target,
+      0,
+      internalFormat,
+      width,
+      height,
+      0,
+      format,
+      type,
+      null
+    )
     gl.bindTexture(target, null)
   }
   loadTexture() {

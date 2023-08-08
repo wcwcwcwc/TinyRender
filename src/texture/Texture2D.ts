@@ -6,6 +6,8 @@ export default class Texture2D extends Texture {
     super(engine, url, options)
     this.createTexture()
     this.updateTexture()
-    this.loadTexture()
+    if (url !== '') {
+      this.loadTexture()
+    }
   }
 }

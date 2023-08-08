@@ -37,6 +37,11 @@ vec3 square(vec3 value) {
     return value*value;
 }
 
+float pow5(float value) {
+    float sq = value * value;
+    return sq * sq * value;
+}
+
 vec4 toRGBD(vec3 color) {
     float maxRGB = maxEps(max(color.r, max(color.g, color.b)));
     float D = max(rgbdMaxRange/maxRGB, 1.);

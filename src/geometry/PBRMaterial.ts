@@ -11,11 +11,16 @@ import irradianceMapFS from '../webgl/shaders/irradianceMapFS.glsl'
 import prefilteredEnvironmentMapFS from '../webgl/shaders/prefilteredEnvironmentMapFS.glsl'
 //@ts-ignore
 import blitCubeFS from '../webgl/shaders/blitCubeFS.glsl'
+//@ts-ignore
+import brdfFS from '../webgl/shaders/brdfFS.glsl'
+//@ts-ignore
+import blitFS from '../webgl/shaders/blitFS.glsl'
 import Program from '../webgl/Program'
 import { Color3, Color4 } from '../math/Color'
 import TextureCube from '../texture/TextureCube'
 import Engine from '../engine/Engine'
 import EffectMaterial from './EffectMaterial'
+import Texture2D from '../texture/Texture2D'
 
 // 该类默认金属工作流
 
@@ -60,20 +65,26 @@ export default class PBRMaterial extends Material {
   public gl: any
   public engine: Engine
   public effectFrameBufferObject: WebGLFramebuffer
+  public effectPrefilteredFrameBufferObject: WebGLFramebuffer
+  public effectBRDFFrameBufferObject: WebGLFramebuffer
+
   public effecter: EffectMaterial
   public prefilteredEnvironmentMapEffecter: EffectMaterial
   public blitIrradianceMapEffecter: EffectMaterial
+  public environmentBRDFTextureEffecter: EffectMaterial
 
   private _irradianceMapEnabled: boolean = false
   private _prefilteredEnvironmentMapEnabled: boolean = false
+
   private readonly _lodGenerationOffset = 0
   private readonly _lodGenerationScale = 0.8
-  public effectPrefilteredFrameBufferObject: WebGLFramebuffer
 
   constructor(engine: Engine, options: PBRMaterialOptions) {
     super({
       color: options.baseColor.toString()
     })
+    this.engine = engine
+    this.gl = engine._gl
     this.baseColor = options.baseColor
     this.baseColorTexture = options.baseColorTexture
     this.metallic =
@@ -89,8 +100,9 @@ export default class PBRMaterial extends Material {
     this.environmentBRDFTexture = options.environmentBRDFTexture
     // 默认实时计算漫反射部分，不采用irradianceMap预计算
     this.irradianceMapEnabled = options.irradianceMapEnabled || false
-    this.engine = engine
-    this.gl = engine._gl
+    if (!this.environmentBRDFTexture) {
+      this.createBRDFTexture()
+    }
   }
 
   /**
@@ -324,6 +336,66 @@ export default class PBRMaterial extends Material {
       //       u_lod: 5,
       //       u_textureSampler: this.prefilteredEnvironmentMapTexture,
       //       u_reflectionSampler: this.reflectionTexture,
+      //     }
+      //   })
+      // }
+      // this.gl.viewport(0, 0, 2048, 2048)
+      // this.blitIrradianceMapEffecter.render()
+      //  =============================================================================
+    }
+  }
+
+  /**
+   * 生成BRDF_LUT纹理
+   */
+  private createBRDFTexture() {
+    if (!this.environmentBRDFTexture) {
+      if (!this.effectBRDFFrameBufferObject) {
+        this.effectBRDFFrameBufferObject = this.gl.createFramebuffer()
+      }
+
+      // 绑定到当前FBO
+      this.gl.bindFramebuffer(
+        this.gl.FRAMEBUFFER,
+        this.effectBRDFFrameBufferObject
+      )
+
+      // 创建environmentBRDFTexture
+      this.environmentBRDFTexture = new Texture2D(this.engine, '', {
+        width: 256,
+        height: 256
+      })
+      // 创建基于屏幕的纹理贴图材质
+      if (!this.environmentBRDFTextureEffecter) {
+        this.environmentBRDFTextureEffecter = new EffectMaterial(this.engine, {
+          name: 'environmentBRDFTexture',
+          fragment: brdfFS,
+          uniformNames: {}
+        })
+      }
+      this.gl.viewport(0, 0, 256, 256)
+      this.gl.framebufferTexture2D(
+        this.gl.FRAMEBUFFER,
+        this.gl.COLOR_ATTACHMENT0,
+        this.gl.TEXTURE_2D,
+        this.environmentBRDFTexture.webglTexture,
+        0
+      )
+      // 渲染
+      this.environmentBRDFTextureEffecter.render()
+      this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
+      this.environmentBRDFTexture.loaded = true
+
+      // blit mode
+      // blit仅用作测试 ================================================================
+
+      // if (!this.blitIrradianceMapEffecter) {
+      //   this.blitIrradianceMapEffecter = new EffectMaterial(this.engine, {
+      //     name: 'irradianceMapBlit',
+      //     fragment: blitFS,
+      //     uniformNames: {
+      //       u_invertY: 0,
+      //       u_textureSampler: this.environmentBRDFTexture,
       //     }
       //   })
       // }
