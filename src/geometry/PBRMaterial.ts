@@ -42,6 +42,15 @@ interface PBRMaterialOptions {
   irradianceMapEnabled: boolean
 }
 
+/**
+ * PBR材质BRDF说明：
+ * BRDF:cook-Torrance
+ * D项：法线分布函数采用GGX的形式（GTR=2)
+ * G项：D项采用GGX，G项采用smith阴影遮蔽（分离的、高度相关的）
+ *
+ * 渲染方程实现说明：
+ *
+ */
 export default class PBRMaterial extends Material {
   public baseColor: Color4
   public baseColorTexture: Texture
