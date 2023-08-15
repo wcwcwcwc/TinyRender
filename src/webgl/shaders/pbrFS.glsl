@@ -135,6 +135,7 @@ vec3 radiance(float alphaG, samplerCube inputTexture, vec3 inputN, vec2 filterin
         ++i) {
             vec2 Xi = hammersley(i, NUM_SAMPLES);
             vec3 H = hemisphereImportanceSampleDggx(Xi, alphaG);
+            // V=N=R
             float NoV = 1.;
             float NoH = H.z;
             float NoH2 = H.z*H.z;
@@ -142,6 +143,7 @@ vec3 radiance(float alphaG, samplerCube inputTexture, vec3 inputN, vec2 filterin
             vec3 L = vec3(2.*NoH*H.x, 2.*NoH*H.y, NoL);
             L = normalize(L);
             if (NoL>0.) {
+                // 由于假定V=N=R，则PDF（L） = D(h)*(h*n)/4(h*v) =  D(h) / 4
                 float pdf_inversed = 4./normalDistributionFunction_TrowbridgeReitzGGX(NoH, alphaG);
                 float omegaS = NUM_SAMPLES_FLOAT_INVERSED*pdf_inversed;
                 float l = log4(omegaS)-log4(omegaP)+log4(K);

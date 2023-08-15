@@ -59,6 +59,7 @@ vec3 specular(vec3 N) {
         L = normalize(L);
 
         if (NoL > 0.) {
+            // 由于假定V=N=R，则PDF = D(h)*(h*n)/4(h*v) =  D(h) / 4
             float pdf_inversed = 4. / normalDistributionFunction_TrowbridgeReitzGGX(NoH, u_linearRoughness);
 
             float omegaS = SAMPLE_COUNT_FLOAT_INVERSED * pdf_inversed;
