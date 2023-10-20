@@ -216,7 +216,7 @@ export class PanoramaToCubeMapTools {
         let v = new Vector3(xv2.x, xv2.y, xv2.z)
         v.sub(xv1, undefined)
           .multiplyScalar(fy)
-          .add(xv1, undefined)
+          .add(xv1)
         v.normalize()
 
         const color = this.CalcProjectionSpherical(

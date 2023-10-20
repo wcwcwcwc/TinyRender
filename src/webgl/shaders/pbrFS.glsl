@@ -21,6 +21,7 @@ uniform vec4 u_lightingIntensity;
     uniform samplerCube u_prefilteredEnvironmentMapSampler;
 #endif
 
+#include <sphericalHarmonicsIrradianceDeclaration>
 
 in vec3 v_worldPosition;
 in vec3 v_normal;
@@ -239,7 +240,11 @@ in vec3 vPositionW, in vec3 normalW, in float alphaG, in vec3 vReflectionMicrosu
         vec3 n = normalize(irradianceVector);
         environmentIrradiance = textureLod(u_irradianceMapSampler, n, 0.0).rgb;
     #else
-        environmentIrradiance = irradiance(reflectionSampler, irradianceVector, vReflectionFilteringInfo);
+        #ifdef SPHERICALHARMONICS_ENABLED
+            environmentIrradiance = computeSHIrradiance(normalize(irradianceVector));
+        #else
+            environmentIrradiance = irradiance(reflectionSampler, irradianceVector, vReflectionFilteringInfo);
+        #endif
     #endif
     
     environmentIrradiance *= vReflectionColor.rgb;

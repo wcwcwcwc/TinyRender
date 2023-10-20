@@ -40,6 +40,7 @@ interface PBRMaterialOptions {
   specularIntensity: number
   reflectionColor: Color3
   irradianceMapEnabled: boolean
+  irradianceSHEnabled: boolean
 }
 
 /**
@@ -84,6 +85,7 @@ export default class PBRMaterial extends Material {
 
   private _irradianceMapEnabled: boolean = false
   private _prefilteredEnvironmentMapEnabled: boolean = false
+  private _irradianceSHEnabled: boolean = false
 
   private readonly _lodGenerationOffset = 0
   private readonly _lodGenerationScale = 0.8
@@ -109,9 +111,24 @@ export default class PBRMaterial extends Material {
     this.environmentBRDFTexture = options.environmentBRDFTexture
     // 默认实时计算漫反射部分，不采用irradianceMap预计算
     this.irradianceMapEnabled = options.irradianceMapEnabled || false
+
+    // 默认不采用球谐计算漫反射部分
+    this.irradianceSHEnabled = options.irradianceSHEnabled || false
     if (!this.environmentBRDFTexture) {
       this.createBRDFTexture()
     }
+  }
+  /**
+   * 是否开启球谐计算漫反射diffuse项
+   */
+  public get irradianceSHEnabled(): boolean {
+    return this._irradianceSHEnabled
+  }
+  /**
+   * 设置是否开启球谐计算漫反射diffuse项
+   */
+  public set irradianceSHEnabled(value: boolean) {
+    this._irradianceSHEnabled = value
   }
 
   /**
@@ -453,6 +470,9 @@ export default class PBRMaterial extends Material {
       if (this._prefilteredEnvironmentMapEnabled) {
         this.defines.push('#define PREFILTEREDENVIRONMENTMAP_ENABLED')
       }
+      if (this._irradianceSHEnabled) {
+        this.defines.push('#define SPHERICALHARMONICS_ENABLED')
+      }
 
       headShader_vs = headShader_vs.concat(this.defines)
       headShader_fs = headShader_fs.concat(this.defines)
@@ -584,6 +604,40 @@ export default class PBRMaterial extends Material {
           this.environmentIntensity,
           this.specularIntensity
         )
+      }
+      if (this.irradianceSHEnabled) {
+        let SH = this.reflectionTexture.sphericalHarmonics
+        switch (key) {
+          case 'u_sphericalL0M0':
+            gl.uniform3f(uniformLocation, SH.l0m0.x, SH.l0m0.y, SH.l0m0.z)
+            break
+          case 'u_sphericalL1M_1':
+            gl.uniform3f(uniformLocation, SH.l1m_1.x, SH.l1m_1.y, SH.l1m_1.z)
+            break
+          case 'u_sphericalL1M0':
+            gl.uniform3f(uniformLocation, SH.l1m0.x, SH.l1m0.y, SH.l1m0.z)
+            break
+          case 'u_sphericalL1M1':
+            gl.uniform3f(uniformLocation, SH.l1m1.x, SH.l1m1.y, SH.l1m1.z)
+            break
+          case 'u_sphericalL2M_2':
+            gl.uniform3f(uniformLocation, SH.l2m_2.x, SH.l2m_2.y, SH.l2m_2.z)
+            break
+          case 'u_sphericalL2M_1':
+            gl.uniform3f(uniformLocation, SH.l2m_1.x, SH.l2m_1.y, SH.l2m_1.z)
+            break
+          case 'u_sphericalL2M0':
+            gl.uniform3f(uniformLocation, SH.l2m0.x, SH.l2m0.y, SH.l2m0.z)
+            break
+          case 'u_sphericalL2M1':
+            gl.uniform3f(uniformLocation, SH.l2m1.x, SH.l2m1.y, SH.l2m1.z)
+            break
+          case 'u_sphericalL2M2':
+            gl.uniform3f(uniformLocation, SH.l2m2.x, SH.l2m2.y, SH.l2m2.z)
+            break
+          default:
+            break
+        }
       }
     }
   }
