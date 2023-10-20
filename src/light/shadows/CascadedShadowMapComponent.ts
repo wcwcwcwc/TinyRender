@@ -258,17 +258,11 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       )
       tempVector2.copy(tempVector).multiplyScalar(prevSplitDist)
       tempVector.multiplyScalar(splitDist)
-      tempVector.add(
-        this._frustumCornersWorldSpace[cascadeIndex][cornerIndex],
-        undefined
-      )
+      tempVector.add(this._frustumCornersWorldSpace[cascadeIndex][cornerIndex])
       this._frustumCornersWorldSpace[cascadeIndex][cornerIndex + 4].copy(
         tempVector
       )
-      this._frustumCornersWorldSpace[cascadeIndex][cornerIndex].add(
-        tempVector2,
-        undefined
-      )
+      this._frustumCornersWorldSpace[cascadeIndex][cornerIndex].add(tempVector2)
     }
   }
 
@@ -292,8 +286,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       ++cornerIndex
     ) {
       this._frustumCenter[cascadeIndex].add(
-        this._frustumCornersWorldSpace[cascadeIndex][cornerIndex],
-        undefined
+        this._frustumCornersWorldSpace[cascadeIndex][cornerIndex]
       )
     }
     this._frustumCenter[cascadeIndex].multiplyScalar(
@@ -347,7 +340,7 @@ export default class CascadedShadowMapComponentComponent extends ShadowMapCompon
       .multiplyScalar(this._cascadeMinExtents[cascadeIndex].z)
     this._shadowCameraPos[cascadeIndex]
       .copy(this._frustumCenter[cascadeIndex])
-      .add(temp, undefined)
+      .add(temp)
 
     // 灯光视图矩阵
     let lookAtMatrix = new Matrix4()
