@@ -43,6 +43,7 @@ export default class Texture {
   public format: number
   public type: number
   public noMipmap: boolean
+  public loadCallbackArray: Function[] = []
   constructor(
     engine: Engine,
     url: string,
@@ -179,6 +180,12 @@ export default class Texture {
     }
     gl.bindTexture(target, null)
     this.loaded = true
+    // 回调
+    for (let index = 0; index < this.loadCallbackArray.length; index++) {
+      const callback = this.loadCallbackArray[index]
+      callback()
+    }
+    this.loadCallbackArray = []
   }
 
   createCubeTexture() {
@@ -277,6 +284,13 @@ export default class Texture {
 
     gl.bindTexture(target, null)
     this.loaded = true
+
+    // 回调
+    for (let index = 0; index < this.loadCallbackArray.length; index++) {
+      const callback = this.loadCallbackArray[index]
+      callback()
+    }
+    this.loadCallbackArray = []
   }
 
   convertRGBtoRGBATextureData(
@@ -317,5 +331,8 @@ export default class Texture {
     }
 
     return rgbaData
+  }
+  addLoadedCallback(callback: Function) {
+    this.loadCallbackArray.push(callback)
   }
 }

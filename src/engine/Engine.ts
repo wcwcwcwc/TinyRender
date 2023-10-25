@@ -18,6 +18,7 @@ import Texture from '../texture/Texture'
 import HDRCubeTexture from '../texture/HDRCubeTexture'
 import SkyBoxMaterial from '../geometry/SkyBoxMaterial'
 import SkyBox from '../skyBox/SkyBox'
+import ReflectionProbe from '../light/ReflectionProbe'
 
 type Nullable<T> = T | null
 // render构造函数参数接口
@@ -47,6 +48,7 @@ export default class Engine {
   public shadowMapComponent: ShadowMapComponent
   public environmentTexture: HDRCubeTexture
   public skyBox: SkyBox
+  public reflectionProbeList: Array<ReflectionProbe>
 
   constructor(options: IRenderOptions) {
     this.container = options.container
@@ -198,6 +200,9 @@ export default class Engine {
       this.lightProjectionMatrix = this.light.getProjectionMatrix() // 默认点光源采用和相机一样的透视投影矩阵
     }
 
+    // Todo:归为 BeforeDraw 流程 ：处理renderTarget事项；
+    // renderTarget事项: 1、shadowMap深度图准备
+    //                  2、反射探针环境贴图准备
     if (this.isShowShadow) {
       //bindFBO....
       this.shadowMapComponent.fbo.setCurrentFrameBufferObject()
@@ -248,15 +253,32 @@ export default class Engine {
       this.shadowMapComponent.fbo.setNullFrameBufferObject()
       this.resize()
     }
+
+    // todo beforeRender:如探针下的渲染列表在内的前置渲染
+    if (this.reflectionProbeList && this.reflectionProbeList.length > 0) {
+      for (let index = 0; index < this.reflectionProbeList.length; index++) {
+        const reflectionProbe = this.reflectionProbeList[index]
+        reflectionProbe.render()
+      }
+      // 还原FBO
+      this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null)
+
+      // 还原VP矩阵
+      this.viewMatrix = this.camera.setViewMatrix()
+      this.projectionMatrix = this.camera.camera.projectionMatrix
+    }
+
     if (this.environmentTexture && this.environmentTexture.loaded) {
       // 天空盒渲染
       this.skyBox.draw()
     }
     this.draw()
   }
-  draw() {
-    for (let index = 0; index < this.meshArray.length; index++) {
-      const mesh = this.meshArray[index]
+  draw(onlyRenderMeshArray?: Array<Mesh>) {
+    let renderList = onlyRenderMeshArray ? onlyRenderMeshArray : this.meshArray
+
+    for (let index = 0; index < renderList.length; index++) {
+      const mesh = renderList[index]
       mesh.updateWorldMatrix()
       let material
 

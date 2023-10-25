@@ -1,5 +1,4 @@
 import Material from './Material'
-import HDRCubeTexture from '../texture/HDRCubeTexture'
 import Texture from '../texture/Texture'
 //@ts-ignore
 import pbrFS from '../webgl/shaders/pbrFS.glsl'
@@ -30,7 +29,7 @@ interface PBRMaterialOptions {
   metallic: number
   roughness: number
   metallicRoughnessTexture: Texture
-  reflectionTexture: HDRCubeTexture
+  reflectionTexture: TextureCube
   environmentBRDFTexture: Texture
   ambientColor: Color3
   emissiveColor: Color3
@@ -58,7 +57,7 @@ export default class PBRMaterial extends Material {
   public metallic: number
   public roughness: number
   public metallicRoughnessTexture: Texture
-  public reflectionTexture: HDRCubeTexture
+  public reflectionTexture: TextureCube
   public environmentBRDFTexture: Texture
   public metallicF0Factor: number = 1
   public f0: number = 0.04
@@ -607,36 +606,38 @@ export default class PBRMaterial extends Material {
       }
       if (this.irradianceSHEnabled) {
         let SH = this.reflectionTexture.sphericalHarmonics
-        switch (key) {
-          case 'u_sphericalL0M0':
-            gl.uniform3f(uniformLocation, SH.l0m0.x, SH.l0m0.y, SH.l0m0.z)
-            break
-          case 'u_sphericalL1M_1':
-            gl.uniform3f(uniformLocation, SH.l1m_1.x, SH.l1m_1.y, SH.l1m_1.z)
-            break
-          case 'u_sphericalL1M0':
-            gl.uniform3f(uniformLocation, SH.l1m0.x, SH.l1m0.y, SH.l1m0.z)
-            break
-          case 'u_sphericalL1M1':
-            gl.uniform3f(uniformLocation, SH.l1m1.x, SH.l1m1.y, SH.l1m1.z)
-            break
-          case 'u_sphericalL2M_2':
-            gl.uniform3f(uniformLocation, SH.l2m_2.x, SH.l2m_2.y, SH.l2m_2.z)
-            break
-          case 'u_sphericalL2M_1':
-            gl.uniform3f(uniformLocation, SH.l2m_1.x, SH.l2m_1.y, SH.l2m_1.z)
-            break
-          case 'u_sphericalL2M0':
-            gl.uniform3f(uniformLocation, SH.l2m0.x, SH.l2m0.y, SH.l2m0.z)
-            break
-          case 'u_sphericalL2M1':
-            gl.uniform3f(uniformLocation, SH.l2m1.x, SH.l2m1.y, SH.l2m1.z)
-            break
-          case 'u_sphericalL2M2':
-            gl.uniform3f(uniformLocation, SH.l2m2.x, SH.l2m2.y, SH.l2m2.z)
-            break
-          default:
-            break
+        if (SH) {
+          switch (key) {
+            case 'u_sphericalL0M0':
+              gl.uniform3f(uniformLocation, SH.l0m0.x, SH.l0m0.y, SH.l0m0.z)
+              break
+            case 'u_sphericalL1M_1':
+              gl.uniform3f(uniformLocation, SH.l1m_1.x, SH.l1m_1.y, SH.l1m_1.z)
+              break
+            case 'u_sphericalL1M0':
+              gl.uniform3f(uniformLocation, SH.l1m0.x, SH.l1m0.y, SH.l1m0.z)
+              break
+            case 'u_sphericalL1M1':
+              gl.uniform3f(uniformLocation, SH.l1m1.x, SH.l1m1.y, SH.l1m1.z)
+              break
+            case 'u_sphericalL2M_2':
+              gl.uniform3f(uniformLocation, SH.l2m_2.x, SH.l2m_2.y, SH.l2m_2.z)
+              break
+            case 'u_sphericalL2M_1':
+              gl.uniform3f(uniformLocation, SH.l2m_1.x, SH.l2m_1.y, SH.l2m_1.z)
+              break
+            case 'u_sphericalL2M0':
+              gl.uniform3f(uniformLocation, SH.l2m0.x, SH.l2m0.y, SH.l2m0.z)
+              break
+            case 'u_sphericalL2M1':
+              gl.uniform3f(uniformLocation, SH.l2m1.x, SH.l2m1.y, SH.l2m1.z)
+              break
+            case 'u_sphericalL2M2':
+              gl.uniform3f(uniformLocation, SH.l2m2.x, SH.l2m2.y, SH.l2m2.z)
+              break
+            default:
+              break
+          }
         }
       }
     }
