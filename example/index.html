@@ -47,9 +47,7 @@
       // 设置相机可交互
       renderer.addCameraOrbitControls()
 
-      let sphereMesh = new TinyRender.Mesh('sphere', {
-        radius: 15
-      })
+      let sphereMesh = new TinyRender.SphereMesh(15)
       let spherePosition = [0, 0, 0]
       sphereMesh.setPosition(spherePosition)
 
@@ -71,8 +69,8 @@
         reflectionTexture:environmentTexture,
         // environmentBRDFTexture:envBRDFTexture
       });
-      // pbr.irradianceMapEnabled = true
-      pbr.irradianceSHEnabled = true;
+      pbr.irradianceMapEnabled = true
+      // pbr.irradianceSHEnabled = true;
       pbr.prefilteredEnvironmentMapEnabled = true
       sphereMesh.material = pbr
 

@@ -1,7 +1,7 @@
 import PerspectiveCamera, {
   IPerspectiveCamera
 } from '../camera/PerspectiveCamera'
-import Mesh from '../geometry/Mesh'
+import Mesh from '../mesh/Mesh'
 import { Matrix4 } from '../math/Matrix4'
 import {
   VertexBuffer,
@@ -16,7 +16,7 @@ import _ from 'lodash'
 import CascadedShadowMapComponentComponent from '../light/shadows/CascadedShadowMapComponent'
 import Texture from '../texture/Texture'
 import HDRCubeTexture from '../texture/HDRCubeTexture'
-import SkyBoxMaterial from '../geometry/SkyBoxMaterial'
+import SkyBoxMaterial from '../material/SkyBoxMaterial'
 import SkyBox from '../skyBox/SkyBox'
 import ReflectionProbe from '../light/ReflectionProbe'
 

@@ -1,5 +1,5 @@
 import FrameBufferObject from '../../webgl/FrameBufferObject'
-import ShadowMapMaterial from '../../geometry/ShadowMapMaterial'
+import ShadowMapMaterial from '../../material/ShadowMapMaterial'
 
 // shadowMapComponent类，内部定义
 // 实现四种采样方式

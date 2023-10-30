@@ -1,5 +1,5 @@
 import FrameBufferObject from '../../webgl/FrameBufferObject'
-import ShadowMapMaterial from '../../geometry/ShadowMapMaterial'
+import ShadowMapMaterial from '../../material/ShadowMapMaterial'
 import Light from '../Light'
 import DirectionLight from '../DirectionLight'
 import Engine from '../../engine/Engine'

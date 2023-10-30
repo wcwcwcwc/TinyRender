@@ -12,7 +12,7 @@ import Program from '../webgl/Program'
 import effectVS from '../webgl/shaders/effectVS.glsl'
 import { ShaderInclude } from '../webgl/shaders/shadersInclude'
 import Texture from '../texture/Texture'
-import { Attributes } from './Mesh'
+import { Attributes } from '../mesh/Mesh'
 import { BufferAttribute } from '../data/BufferAttribute'
 import {
   IndexBuffer,

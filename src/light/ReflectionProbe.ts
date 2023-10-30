@@ -3,7 +3,7 @@
  * 自由位置下的环境贴图，用以处理PBR流程中的漫反射和高光反射
  */
 import Engine from '../engine/Engine'
-import Mesh from '../geometry/Mesh'
+import Mesh from '../mesh/Mesh'
 import { Matrix4 } from '../math/Matrix4'
 import { Quaternion } from '../math/Quaternion'
 import { Vector3 } from '../math/Vector3'

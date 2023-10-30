@@ -2,31 +2,31 @@
 <html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
-    <link rel="shortcut icon" href="#" />
-    <title>Document</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <link rel="shortcut icon" href="#" />
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-        #webglDOM {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+    #webglDOM {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 
 <body>
-    <canvas id="webglDOM"></canvas>
-    <script src="../dist/tinyRender.umd.js"></script>
-    <script type="module">
-        import { GUI } from './utils/dat.gui.module.js'
+  <canvas id="webglDOM"></canvas>
+  <script src="../dist/tinyRender.umd.js"></script>
+  <script type="module">
+    import { GUI } from './utils/dat.gui.module.js'
       // 实例化引擎
       let renderer = new TinyRender.Engine({
         container: 'webglDOM'
@@ -47,11 +47,7 @@
       // 设置相机可交互
       renderer.addCameraOrbitControls()
       // 添加mesh
-      let cubeMesh = new TinyRender.Mesh('cube', {
-        height: 15,
-        width: 15,
-        depth: 150
-      })
+      let cubeMesh = new TinyRender.CubeMesh( 15, 15, 150)
       // 设置mesh位置
       cubeMesh.setPosition([0, 0, 25])
       // let cubeMaterial = new TinyRender.Material({
@@ -74,9 +70,7 @@
       // 添加材质
       cubeMesh.material = cubeMaterial
 
-      let sphereMesh = new TinyRender.Mesh('sphere', {
-        radius: 15
-      })
+      let sphereMesh = new TinyRender.SphereMesh(15)
 
       let sphereMaterial = new TinyRender.PhongMaterial({
         specularStrength: lightOptions.specularStrength,
@@ -88,10 +82,7 @@
       sphereMesh.material = sphereMaterial
       sphereMesh.setPosition(spherePosition)
 
-      let planeMesh = new TinyRender.Mesh('plane', {
-        width: 3000,
-        height: 3000
-      })
+      let planeMesh = new TinyRender.PlaneMesh(3000, 3000)
       planeMesh.setPosition([0, 0, 0])
       // let planeMaterial = new TinyRender.Material({
       //     'color': 'rgba(0.76470588,1.0,0.8862745098,1.0)',
@@ -112,11 +103,7 @@
       renderer.addMesh(sphereMesh)
 
       for (let i = 1; i < 11; i++) {
-        let CSMMesh = new TinyRender.Mesh('cube', {
-          height: 15,
-          width: 15,
-          depth: 150
-        })
+        let CSMMesh = new TinyRender.CubeMesh(15,15,150)
         CSMMesh.material = cubeMaterial;
         CSMMesh.setPosition([0, i *30, 25]);
         renderer.addMesh(CSMMesh)
@@ -145,11 +132,7 @@
         intensity: lightOptions.ambientIntensity
       })
       // 可视化灯光
-      let lightMesh = new TinyRender.Mesh('cube', {
-        height: 5,
-        width: 5,
-        depth: 5
-      })
+      let lightMesh = new TinyRender.CubeMesh(5,5,5)
 
       let lightMaterial = new TinyRender.Material({
         color: 'rgba(1.0,0.0,1.0,1.0)',
