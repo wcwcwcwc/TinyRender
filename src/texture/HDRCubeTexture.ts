@@ -23,7 +23,9 @@ export default class HDRCubeTexture extends TextureCube {
     'back'
   ]
   constructor(engine: Engine, url: string, size: number) {
-    super(engine, url)
+    super(engine, url, {
+      noMipmap: false
+    })
     this.engine = engine
     this.url = url
     this.loaded = false
@@ -31,7 +33,6 @@ export default class HDRCubeTexture extends TextureCube {
     this.size = size || 512
     this.width = size
     this.height = size
-    this.noMipmap = false
     this.loadFile(
       this.url,
       data => {
