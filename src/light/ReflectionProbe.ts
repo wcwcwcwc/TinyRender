@@ -33,9 +33,13 @@ export default class ReflectionProbe {
   ) {
     this.engine = engine
     this.name = name || 'reflection-probe0'
-    this.renderList = reflectionProbeOptions.renderList || []
-    this.position = reflectionProbeOptions.position || new Vector3()
-    this.textureSize = reflectionProbeOptions.textureSize || 512
+    this.renderList =
+      (reflectionProbeOptions && reflectionProbeOptions.renderList) || []
+    this.position =
+      (reflectionProbeOptions && reflectionProbeOptions.position) ||
+      new Vector3()
+    this.textureSize =
+      (reflectionProbeOptions && reflectionProbeOptions.textureSize) || 512
     this.gl = engine._gl
     this.engine.reflectionProbeList.push(this)
 

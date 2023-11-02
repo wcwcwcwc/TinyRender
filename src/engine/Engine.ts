@@ -48,7 +48,7 @@ export default class Engine {
   public shadowMapComponent: ShadowMapComponent
   public environmentTexture: HDRCubeTexture
   public skyBox: SkyBox
-  public reflectionProbeList: Array<ReflectionProbe>
+  public reflectionProbeList: Array<ReflectionProbe> = []
 
   constructor(options: IRenderOptions) {
     this.container = options.container
