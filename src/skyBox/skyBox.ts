@@ -7,6 +7,7 @@ import {
   VertexArrayObject,
   VertexBuffer
 } from '../webgl/VertexArrayObject'
+import CubeMesh from '../mesh/CubeMesh'
 
 export default class SkyBox {
   environmentTexture: HDRCubeTexture
@@ -21,11 +22,7 @@ export default class SkyBox {
     this.setUp()
   }
   setUp() {
-    this.skyBoxMesh = new Mesh('cube', {
-      height: 1000,
-      width: 1000,
-      depth: 1000
-    })
+    this.skyBoxMesh = new CubeMesh(1000, 1000, 1000)
     this.skyBoxMaterial = new SkyBoxMaterial({
       environmentTexture: this.environmentTexture
     })
