@@ -24,7 +24,10 @@ export default class HDRCubeTexture extends TextureCube {
   ]
   constructor(engine: Engine, url: string, size: number) {
     super(engine, url, {
-      noMipmap: false
+      noMipmap: false,
+      format: engine._gl.RGBA32F,
+      internalFormat: engine._gl.RGBA,
+      type: engine._gl.FLOAT
     })
     this.engine = engine
     this.url = url

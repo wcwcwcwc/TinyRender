@@ -200,9 +200,6 @@ export default class Texture {
       this.minFilter = this.gl.LINEAR
       this.magFilter = this.gl.LINEAR
     }
-    this.format = this.gl.RGBA32F
-    this.internalFormat = this.gl.RGBA
-    this.type = this.gl.FLOAT
     this.target = this.gl.TEXTURE_CUBE_MAP
     const {
       gl,
