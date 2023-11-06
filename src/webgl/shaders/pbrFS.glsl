@@ -96,6 +96,9 @@ vec3 computeCubicCoords(vec4 worldPos, vec3 worldNormal, vec3 eyePosition, mat4 
     vec3 viewDir = normalize(worldPos.xyz-eyePosition);
     vec3 coords = reflect(viewDir, worldNormal);
     coords = vec3(reflectionMatrix*vec4(coords, 0));
+    #ifdef INVCUBIC
+        coords.y *= -1.0;
+    #endif
     return coords;
 }
 vec3 computeReflectionCoords(vec4 worldPos, vec3 worldNormal) {
@@ -173,6 +176,10 @@ in float alphaG, in vec3 vReflectionMicrosurfaceInfos, in vec2 vReflectionInfos,
     #else
         environmentRadiance = vec4(radiance(alphaG, reflectionSampler, reflectionCoords, vReflectionFilteringInfo), 1.0);
     #endif
+
+    #ifdef GAMMAREFLECTION
+        environmentRadiance.rgb = toLinearSpace(environmentRadiance.rgb);
+    #endif
     
     environmentRadiance.rgb *= vReflectionInfos.x;
     environmentRadiance.rgb *= vReflectionColor.rgb;
@@ -235,6 +242,10 @@ in vec3 vPositionW, in vec3 normalW, in float alphaG, in vec3 vReflectionMicrosu
     );
     vec3 environmentIrradiance = vec3(0., 0., 0.);
     vec3 irradianceVector = vec3(reflectionMatrix*vec4(normalW, 0)).xyz;
+
+    #ifdef INVCUBIC
+        irradianceVector.y *= -1.0;
+    #endif
 
     #ifdef IRRADIANCEMAP_ENABLED
         vec3 n = normalize(irradianceVector);

@@ -266,6 +266,7 @@ export default class Engine {
       // 还原VP矩阵
       this.viewMatrix = this.camera.setViewMatrix()
       this.projectionMatrix = this.camera.camera.projectionMatrix
+      this._gl.viewport(0, 0, this.width, this.height)
     }
 
     if (this.environmentTexture && this.environmentTexture.loaded) {

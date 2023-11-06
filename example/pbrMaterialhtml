@@ -66,9 +66,6 @@
         unpackFlipY:true
       });
 
-      // 添加天空盒
-      renderer.addSkyBox(environmentTexture);
-
       // pbr材质
       let pbr = new TinyRender.PBRMaterial(renderer,{
         baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
@@ -83,22 +80,23 @@
 
 
 
-      let probe = new TinyRender.ReflectionProbe(renderer)
+      // let probe = new TinyRender.ReflectionProbe(renderer)
 
-      probe.addMesh(sphereMesh)
-      probe.addMesh(renderer.skyBox)
+      // probe.addMesh(sphereMesh)
+      // probe.addMesh(renderer.skyBox)
 
-      let pbr2 = new TinyRender.PBRMaterial(renderer,{
-        baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
-        metallicRoughnessTexture:metallicRoughnessTexture,
-        reflectionTexture:probe.cubeMapTexture,
-        // environmentBRDFTexture:envBRDFTexture
-      });
+      // let pbr2 = new TinyRender.PBRMaterial(renderer,{
+      //   baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
+      //   metallicRoughnessTexture:metallicRoughnessTexture,
+      //   reflectionTexture:probe.cubeMapTexture,
+      //   // environmentBRDFTexture:envBRDFTexture
+      // });
 
-      sphereMesh2.material = pbr2
-      // sphereMesh2.material = pbr
+      // sphereMesh2.material = pbr2
+      sphereMesh2.material = pbr
 
-
+      // 添加天空盒
+      renderer.addSkyBox(environmentTexture);
       renderer.addMesh(sphereMesh)
       renderer.addMesh(sphereMesh2)
 

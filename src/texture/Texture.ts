@@ -44,6 +44,7 @@ export default class Texture {
   public type: number
   public noMipmap: boolean
   public loadCallbackArray: Function[] = []
+  public gammaSpace: boolean = false
   constructor(
     engine: Engine,
     url: string,
@@ -220,6 +221,7 @@ export default class Texture {
     gl.texParameteri(target, gl.TEXTURE_MIN_FILTER, minFilter)
     gl.texParameteri(target, gl.TEXTURE_WRAP_S, wrapS)
     gl.texParameteri(target, gl.TEXTURE_WRAP_T, wrapT)
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, this.unpackFlipY)
 
     for (let face = 0; face < 6; face++) {
       gl.texImage2D(

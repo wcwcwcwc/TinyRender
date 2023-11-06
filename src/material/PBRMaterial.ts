@@ -473,6 +473,14 @@ export default class PBRMaterial extends Material {
         this.defines.push('#define SPHERICALHARMONICS_ENABLED')
       }
 
+      if (this.reflectionTexture.isInvCubic) {
+        this.defines.push('#define INVCUBIC')
+      }
+
+      if (this.reflectionTexture.gammaSpace) {
+        this.defines.push('#define GAMMAREFLECTION')
+      }
+
       headShader_vs = headShader_vs.concat(this.defines)
       headShader_fs = headShader_fs.concat(this.defines)
 

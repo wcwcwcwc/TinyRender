@@ -9,6 +9,7 @@ import { Quaternion } from '../math/Quaternion'
 import { Vector3 } from '../math/Vector3'
 import SkyBox from '../skyBox/SkyBox'
 import TextureCube from '../texture/TextureCube'
+import CONSTANTS from '../texture/Constants'
 
 interface ReflectionProbeOptions {
   position: Vector3
@@ -54,14 +55,62 @@ export default class ReflectionProbe {
     this.cubeMapTexture = new TextureCube(this.engine, '', {
       width: 512,
       height: 512,
-      noMipmap: false
+      noMipmap: false,
+      unpackFlipY: true,
+      wrapS: CONSTANTS.REPEAT,
+      wrapT: CONSTANTS.REPEAT
     })
+    this.cubeMapTexture.isInvCubic = true
+    this.cubeMapTexture.gammaSpace = true
   }
   /**
    * 构建此probe渲染的帧缓冲区
    */
   createFrameBuffer() {
     this.probeFrameBufferObject = this.gl.createFramebuffer()
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, this.probeFrameBufferObject)
+    let depthTexture = this.gl.createTexture()
+    this.gl.bindTexture(this.gl.TEXTURE_2D, depthTexture)
+    this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, false)
+    this.gl.texParameteri(
+      this.gl.TEXTURE_2D,
+      this.gl.TEXTURE_MAG_FILTER,
+      this.gl.NEAREST
+    )
+    this.gl.texParameteri(
+      this.gl.TEXTURE_2D,
+      this.gl.TEXTURE_MIN_FILTER,
+      this.gl.NEAREST
+    )
+    this.gl.texParameteri(
+      this.gl.TEXTURE_2D,
+      this.gl.TEXTURE_WRAP_S,
+      this.gl.CLAMP_TO_EDGE
+    )
+    this.gl.texParameteri(
+      this.gl.TEXTURE_2D,
+      this.gl.TEXTURE_WRAP_T,
+      this.gl.CLAMP_TO_EDGE
+    )
+    this.gl.texImage2D(
+      this.gl.TEXTURE_2D,
+      0,
+      this.gl.DEPTH_COMPONENT24,
+      512,
+      512,
+      0,
+      this.gl.DEPTH_COMPONENT,
+      this.gl.UNSIGNED_INT,
+      null
+    )
+    this.gl.framebufferTexture2D(
+      this.gl.FRAMEBUFFER,
+      this.gl.DEPTH_ATTACHMENT,
+      this.gl.TEXTURE_2D,
+      depthTexture,
+      0
+    )
+    this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
   }
   /**
    * 添加进渲染队列
@@ -85,20 +134,24 @@ export default class ReflectionProbe {
       let renderList = this.renderList
 
       // 更新probe下的VP矩阵
-      this.viewMatrix = this.updateViewMatrix(face)
-      this.projectionMatrix = this.projectionMatrix
+      this.engine.viewMatrix = this.updateViewMatrix(face)
+      this.engine.projectionMatrix = this.projectionMatrix
 
       // 是否包含天空盒，天空盒首先渲染
       let skyBoxInProbe = renderList.filter(mesh => mesh instanceof SkyBox)
 
       this.gl.viewport(0, 0, this.textureSize, this.textureSize)
-
       this.gl.framebufferTexture2D(
         this.gl.FRAMEBUFFER,
         this.gl.COLOR_ATTACHMENT0,
         this.gl.TEXTURE_CUBE_MAP_POSITIVE_X + face,
         this.cubeMapTexture.webglTexture,
         0
+      )
+      this.gl.clear(
+        this.gl.COLOR_BUFFER_BIT |
+          this.gl.DEPTH_BUFFER_BIT |
+          this.gl.STENCIL_BUFFER_BIT
       )
       if (
         skyBoxInProbe.length > 0 &&
@@ -111,7 +164,18 @@ export default class ReflectionProbe {
       // 其他Mesh渲染
       let meshInProbe = renderList.filter(mesh => mesh instanceof Mesh)
       this.engine.draw(meshInProbe as Array<Mesh>)
+
+      // this.gl.bindFramebuffer(this.gl.FRAMEBUFFER, null)
     }
+
+    // 更新cubeMap，生成mipmap
+    this.gl.bindTexture(
+      this.gl.TEXTURE_CUBE_MAP,
+      this.cubeMapTexture.webglTexture
+    )
+    this.gl.generateMipmap(this.gl.TEXTURE_CUBE_MAP)
+    this.gl.bindTexture(this.gl.TEXTURE_CUBE_MAP, null)
+
     // 全部渲染完为贴图true
     this.cubeMapTexture.loaded = true
   }
@@ -146,6 +210,7 @@ export default class ReflectionProbe {
     }
     let target = new Vector3()
     target.add(this.position)
+    target.add(add)
     let up = new Vector3(0, 1, 0)
     let scale = new Vector3(1, 1, 1)
     let quaternion = new Quaternion()
@@ -163,7 +228,7 @@ export default class ReflectionProbe {
    * 计算投影矩阵
    */
   updatePerspectiveMatrix() {
-    const near = 0.01
+    const near = 1
     let top = near * Math.tan((Math.PI / 180) * 0.5 * 90)
     let height = 2 * top
     let width = height
@@ -173,8 +238,8 @@ export default class ReflectionProbe {
       left + width,
       top,
       top - height,
-      0.01,
-      1000
+      1,
+      10000
     )
     return this.projectionMatrix
   }
