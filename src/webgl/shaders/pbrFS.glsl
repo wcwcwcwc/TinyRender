@@ -109,6 +109,7 @@ void createReflectionCoords(
 in vec3 vPositionW, in vec3 normalW, out vec3 reflectionCoords
 ) {
     vec3 reflectionVector = computeReflectionCoords(vec4(v_worldPosition, 1.0), v_normal);
+    reflectionVector.z *= -1.0;
     reflectionCoords = reflectionVector;
 }
 
@@ -246,6 +247,8 @@ in vec3 vPositionW, in vec3 normalW, in float alphaG, in vec3 vReflectionMicrosu
     #ifdef INVCUBIC
         irradianceVector.y *= -1.0;
     #endif
+
+    irradianceVector.z *=-1.0;
 
     #ifdef IRRADIANCEMAP_ENABLED
         vec3 n = normalize(irradianceVector);
