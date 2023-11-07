@@ -72,6 +72,9 @@ export interface CubeMapInfo {
 /**
  * Helper class useful to convert panorama picture to their cubemap representation in 6 faces.
  */
+
+// 这里的一个坑：借鉴了babylon的生成cubemap方式，但babylon是左手坐标系，而我们引擎是右手坐标系，因此采样cubemap的时候，采样坐标的z要统一乘上-1，在天空盒和pbr中。
+// TODO:改为右手坐标系，计算cubemap
 export class PanoramaToCubeMapTools {
   private static FACE_LEFT = [
     new Vector3(-1.0, -1.0, -1.0),
