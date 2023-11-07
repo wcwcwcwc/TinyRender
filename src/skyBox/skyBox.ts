@@ -34,6 +34,11 @@ export default class SkyBox {
     if (!program) return
 
     let { attributesLocations, uniformLocations } = program
+    this.skyBoxMesh.setPosition([
+      this.engine.camera.position.x,
+      this.engine.camera.position.y,
+      this.engine.camera.position.z
+    ])
     this.skyBoxMesh.updateWorldMatrix()
     let attributes = this.skyBoxMesh.attributes
     for (let key in attributesLocations) {

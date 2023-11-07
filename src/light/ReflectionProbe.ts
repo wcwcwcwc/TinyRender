@@ -200,10 +200,10 @@ export default class ReflectionProbe {
         add.set(0, 1, 0)
         break
       case 4:
-        add.set(0, 0, 1)
+        add.set(0, 0, -1)
         break
       case 5:
-        add.set(0, 0, -1)
+        add.set(0, 0, 1)
         break
       default:
         break
