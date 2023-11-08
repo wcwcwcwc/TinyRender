@@ -64,14 +64,25 @@ float log4(float x) {
 }
 
 void reflectivityBlock(
-in vec4 vReflectivityColor, in vec3 surfaceAlbedo, in vec4 metallicReflectanceFactors, in vec4 surfaceMetallicOrReflectivityColorMap, out reflectivityOutParams outParams
+in vec4 vReflectivityColor, 
+in vec3 surfaceAlbedo, 
+in vec4 metallicReflectanceFactors, 
+
+#ifdef METALLICROUGHNESSTEXTURE_ENABLED
+    in vec4 surfaceMetallicOrReflectivityColorMap, 
+#endif
+
+out reflectivityOutParams outParams
 ) {
     float microSurface = vReflectivityColor.a;
     vec3 surfaceReflectivityColor = vReflectivityColor.rgb;
     vec2 metallicRoughness = surfaceReflectivityColor.rg; // 金属度、粗糙度系数
-    metallicRoughness.r *= surfaceMetallicOrReflectivityColorMap.b; // 金属度
-    metallicRoughness.g *= surfaceMetallicOrReflectivityColorMap.g; // 粗糙度
-    #define CUSTOM_FRAGMENT_UPDATE_METALLICROUGHNESS
+
+    #ifdef METALLICROUGHNESSTEXTURE_ENABLED
+        metallicRoughness.r *= surfaceMetallicOrReflectivityColorMap.b; // 金属度
+        metallicRoughness.g *= surfaceMetallicOrReflectivityColorMap.g; // 粗糙度
+    #endif
+
     microSurface = 1.0-metallicRoughness.g;
     vec3 baseColor = surfaceAlbedo;
     vec3 metallicF0 = metallicReflectanceFactors.rgb; // 默认0.4，ior为1到1.5
@@ -276,15 +287,24 @@ void main() {
     // ao
     vec3 ambientOcclusionColor = vec3(1., 1., 1.);
     vec3 baseColor = surfaceAlbedo;
+
     // 金属度粗糙度纹理
-    vec4 surfaceMetallicOrReflectivityColorMap = texture(u_reflectivitySampler, v_mainUV1);
-    vec4 baseReflectivity = surfaceMetallicOrReflectivityColorMap;
+    #ifdef METALLICROUGHNESSTEXTURE_ENABLED
+        vec4 surfaceMetallicOrReflectivityColorMap = texture(u_reflectivitySampler, v_mainUV1);
+    #endif
+
     //(f0,f90)
     vec4 metallicReflectanceFactors = u_metallicReflectanceFactors;
     reflectivityOutParams reflectivityOut;
     // 反射率颜色计算部分，计算金属和电介质的反射率颜色
     reflectivityBlock(
-    u_reflectivityColor, surfaceAlbedo, metallicReflectanceFactors, surfaceMetallicOrReflectivityColorMap, reflectivityOut
+    u_reflectivityColor, 
+    surfaceAlbedo, 
+    metallicReflectanceFactors, 
+    #ifdef METALLICROUGHNESSTEXTURE_ENABLED
+        surfaceMetallicOrReflectivityColorMap, 
+    #endif
+    reflectivityOut
     );
     float roughness = reflectivityOut.roughness;
     surfaceAlbedo = reflectivityOut.surfaceAlbedo;

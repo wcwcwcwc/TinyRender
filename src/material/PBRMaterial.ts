@@ -481,6 +481,11 @@ export default class PBRMaterial extends Material {
         this.defines.push('#define GAMMAREFLECTION')
       }
 
+      // 输入金属度粗糙度贴图时
+      if (this.metallicRoughnessTexture) {
+        this.defines.push('#define METALLICROUGHNESSTEXTURE_ENABLED')
+      }
+
       headShader_vs = headShader_vs.concat(this.defines)
       headShader_fs = headShader_fs.concat(this.defines)
 
@@ -519,7 +524,11 @@ export default class PBRMaterial extends Material {
         gl.uniform4f(uniformLocation, r, g, b, a)
       }
 
-      if (key === 'u_reflectivitySampler') {
+      if (
+        key === 'u_reflectivitySampler' &&
+        this.metallicRoughnessTexture &&
+        this.metallicRoughnessTexture.loaded
+      ) {
         gl.activeTexture(gl.TEXTURE0)
         gl.bindTexture(
           gl.TEXTURE_2D,
