@@ -15,6 +15,7 @@ import Texture2D from './texture/Texture2D'
 import PBRMaterial from './material/PBRMaterial'
 import { Color3, Color4 } from './math/Color'
 import ReflectionProbe from './light/ReflectionProbe'
+import GLTFLoader from './loader/GLTFLoader'
 import CONSTANTS from './texture/Constants'
 
 export default {
@@ -36,5 +37,6 @@ export default {
   Color3,
   Color4,
   ReflectionProbe,
+  GLTFLoader,
   CONSTANTS
 }

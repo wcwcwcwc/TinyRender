@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+  <link rel="shortcut icon" href="#" />
+  <title>Document</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    #webglDOM {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <canvas id="webglDOM"></canvas>
+  <script src="../dist/tinyRender.umd.js"></script>
+  <script type="module">
+    import { GUI } from './utils/dat.gui.module.js'
+      // 实例化引擎
+      let renderer = new TinyRender.Engine({
+        container: 'webglDOM'
+      })
+      // 添加相机
+      let camera = new TinyRender.PerspectiveCamera(
+        {
+          fov: 75,
+          aspect: window.innerWidth / window.innerHeight,
+          nearZ: 1,
+          farZ: 1000
+        },
+        renderer.canvas
+      )
+      camera.setPosition([0,0,-80])
+      camera.lookAt = [0, 0, 0]
+      renderer.addCamera(camera)
+      // 设置相机可交互
+      renderer.addCameraOrbitControls()
+
+      let sphereMesh = new TinyRender.SphereMesh(15)
+      let spherePosition = [50, 0, 0]
+      sphereMesh.setPosition(spherePosition)
+
+      let sphereMesh2 = new TinyRender.SphereMesh(15)
+      let spherePosition2 = [0, 0, 0]
+      sphereMesh2.setPosition(spherePosition2)
+
+      let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
+
+      let metallicRoughnessTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg',{
+        noMipmap:true,
+        wrapS:TinyRender.CONSTANTS.REPEAT,
+        wrapT:TinyRender.CONSTANTS.REPEAT});
+
+      let envBRDFTexture = new TinyRender.Texture2D(renderer,'./assets/texture/uncorrelatedBRDF_RGBD.png',{
+        unpackFlipY:true
+      });
+
+      // 添加天空盒
+      renderer.addSkyBox(environmentTexture);
+
+      // pbr材质
+      let pbr = new TinyRender.PBRMaterial(renderer,{
+        baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
+        metallicRoughnessTexture:metallicRoughnessTexture,
+        reflectionTexture:environmentTexture,
+        // environmentBRDFTexture:envBRDFTexture
+      });
+      // pbr.irradianceMapEnabled = true
+      // pbr.irradianceSHEnabled = true;
+      // pbr.prefilteredEnvironmentMapEnabled = true
+      sphereMesh.material = pbr
+
+
+
+      let probe = new TinyRender.ReflectionProbe(renderer)
+
+      probe.addMesh(sphereMesh)
+      probe.addMesh(renderer.skyBox)
+
+      let pbr2 = new TinyRender.PBRMaterial(renderer,{
+        baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
+        metallicRoughnessTexture:metallicRoughnessTexture,
+        reflectionTexture:probe.cubeMapTexture,
+        // environmentBRDFTexture:envBRDFTexture
+      });
+
+      sphereMesh2.material = pbr2
+      // sphereMesh2.material = pbr
+
+
+      renderer.addMesh(sphereMesh)
+      renderer.addMesh(sphereMesh2)
+
+      // gui
+      const effectController = {
+      }
+
+      function initGUI() {
+        const gui = new GUI()
+      }
+      initGUI()
+
+      function animate() {
+        requestAnimationFrame(animate)
+        renderer.render()
+      }
+
+      // renderer.render();
+
+      animate()
+      console.log(renderer)
+    </script>
+</body>
+
+</html>

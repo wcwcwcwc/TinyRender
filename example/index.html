@@ -47,60 +47,11 @@
       // 设置相机可交互
       renderer.addCameraOrbitControls()
 
-      let sphereMesh = new TinyRender.SphereMesh(15)
-      let spherePosition = [50, 0, 0]
-      sphereMesh.setPosition(spherePosition)
-
-      let sphereMesh2 = new TinyRender.SphereMesh(15)
-      let spherePosition2 = [0, 0, 0]
-      sphereMesh2.setPosition(spherePosition2)
-
-      let environmentTexture = new TinyRender.HDRCubeTexture(renderer,'./assets/texture/environment.hdr',512);
-
-      let metallicRoughnessTexture = new TinyRender.Texture2D(renderer,'./assets/texture/mr.jpg',{
-        noMipmap:true,
-        wrapS:TinyRender.CONSTANTS.REPEAT,
-        wrapT:TinyRender.CONSTANTS.REPEAT});
-
-      let envBRDFTexture = new TinyRender.Texture2D(renderer,'./assets/texture/uncorrelatedBRDF_RGBD.png',{
-        unpackFlipY:true
-      });
-
-      // 添加天空盒
-      renderer.addSkyBox(environmentTexture);
-
-      // pbr材质
-      let pbr = new TinyRender.PBRMaterial(renderer,{
-        baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
-        metallicRoughnessTexture:metallicRoughnessTexture,
-        reflectionTexture:environmentTexture,
-        // environmentBRDFTexture:envBRDFTexture
-      });
-      // pbr.irradianceMapEnabled = true
-      // pbr.irradianceSHEnabled = true;
-      // pbr.prefilteredEnvironmentMapEnabled = true
-      sphereMesh.material = pbr
+      new TinyRender.GLTFLoader(renderer,"https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf",(gltf)=>{
 
 
+      })
 
-      let probe = new TinyRender.ReflectionProbe(renderer)
-
-      probe.addMesh(sphereMesh)
-      probe.addMesh(renderer.skyBox)
-
-      let pbr2 = new TinyRender.PBRMaterial(renderer,{
-        baseColor:'rgba(1.0, 0.766, 0.336,1.0)',
-        metallicRoughnessTexture:metallicRoughnessTexture,
-        reflectionTexture:probe.cubeMapTexture,
-        // environmentBRDFTexture:envBRDFTexture
-      });
-
-      sphereMesh2.material = pbr2
-      // sphereMesh2.material = pbr
-
-
-      renderer.addMesh(sphereMesh)
-      renderer.addMesh(sphereMesh2)
 
       // gui
       const effectController = {
