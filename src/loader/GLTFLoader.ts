@@ -39,8 +39,12 @@ export default class GLTFLoader {
   modelRequestCallback(data: any) {
     this.json = JSON.parse(data)
     this.addIndex()
+    this.loadJson()
   }
 
+  /**
+   * 给gltf各个对象添加索引
+   */
   addIndex() {
     this.assignIndex(this.json.accessors)
     this.assignIndex(this.json.animations)
@@ -63,5 +67,9 @@ export default class GLTFLoader {
         array[index].index = index
       }
     }
+  }
+
+  loadJson(): Promise<void> {
+    return Promise.resolve().then(() => {})
   }
 }
