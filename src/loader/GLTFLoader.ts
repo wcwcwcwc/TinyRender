@@ -6,6 +6,7 @@
  */
 
 import Engine from '../engine/Engine'
+import Mesh from '../mesh/Mesh'
 import { loadFile } from '../misc/Ajax'
 export default class GLTFLoader {
   engine: Engine
@@ -39,7 +40,9 @@ export default class GLTFLoader {
   modelRequestCallback(data: any) {
     this.json = JSON.parse(data)
     this.addIndex()
-    this.loadJson()
+    this.loadJson().then(() => {
+      console.log('loaded')
+    })
   }
 
   /**
@@ -69,7 +72,193 @@ export default class GLTFLoader {
     }
   }
 
+  /**
+   * 从整个gltf_json开始往下加载
+   * @returns
+   */
   loadJson(): Promise<void> {
-    return Promise.resolve().then(() => {})
+    return Promise.resolve().then(() => {
+      const promises = new Array<Promise<any>>()
+      if (
+        this.json.scene != undefined ||
+        (this.json.scenes && this.json.scenes[0])
+      ) {
+        const scene = this.json.scenes[this.json.scene || 0]
+        promises.push(this.loadScene(scene))
+      }
+    })
+  }
+
+  /**
+   * 加载scene
+   * @param scene
+   * @returns
+   */
+  loadScene(scene: any): Promise<void> {
+    const promises = new Array<Promise<any>>()
+    if (scene.nodes) {
+      for (const index of scene.nodes) {
+        const node = this.json.nodes[index]
+        promises.push(this.loadNode(node))
+      }
+    }
+    return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * 加载node
+   * {
+   *  mesh
+   *  name
+   *  rotation
+   * }
+   * @param node
+   * @returns
+   */
+  loadNode(node: any): Promise<void> {
+    const promises = new Array<Promise<any>>()
+    const meshIndex = node.mesh
+    if (meshIndex !== undefined) {
+      const mesh = this.json.meshes[meshIndex]
+      promises.push(this.loadMesh(mesh, node))
+    }
+
+    return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * 加载mesh
+   * {
+   *  name
+   *  primitives
+   * }
+   * @param mesh
+   * @returns
+   */
+  loadMesh(mesh: any, node: any): Promise<Mesh> {
+    const promises = new Array<Promise<any>>()
+    const primitives = mesh.primitives
+    if (primitives[0].index == undefined) {
+      this.assignIndex(primitives)
+    }
+    if (primitives.length === 1) {
+      const primitive = mesh.primitives[0]
+      promises.push(
+        this.loadMeshPrimitives(primitive, (tinyMesh: Mesh) => {
+          if (node.rotation) {
+            tinyMesh.quaternion.set(
+              node.rotation[0],
+              node.rotation[1],
+              node.rotation[2],
+              node.rotation[3]
+            )
+          }
+          node.tinyMesh = tinyMesh
+        })
+      )
+    }
+
+    return Promise.all(promises).then(() => {
+      return node.tinyMesh
+    })
+  }
+
+  /**
+   * 加载primitives
+   * {
+   *  attributes
+   *    {
+   *     NORMAL
+   *     POSITION
+   *     TEXCOORD_0
+   *    }
+   *  indices
+   *  material
+   * }
+   * @param primitives
+   */
+  loadMeshPrimitives(primitives: any, callback: Function): Promise<Mesh> {
+    const promises = new Array<Promise<any>>()
+    let promise: Promise<any>
+
+    let tinyMesh = new Mesh('', {})
+
+    // attributes
+    promises.push(this.loadVertexData(primitives, tinyMesh, () => {}))
+
+    // material
+
+    callback(tinyMesh)
+    promise = Promise.all(promises)
+    return promise.then(() => {
+      return tinyMesh
+    })
+  }
+
+  /**
+   * 记载顶点
+   * {
+   *  attributes
+   *  indices
+   * }
+   * @param primitives
+   * @param tinyMesh
+   * @param callback
+   * @returns
+   */
+  loadVertexData(primitives: any, tinyMesh: Mesh, callback: Function) {
+    const promises = new Array<Promise<any>>()
+    const attributes = primitives.attributes
+    const accessor = this.json.accessors[primitives.indices]
+    // indices
+    promises.push(this.loadIndices(accessor).then(() => {}))
+    return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * 加载顶点绘制索引
+   * @param accessor
+   * @param callback
+   */
+  loadIndices(accessor: any): Promise<Array<number>> {
+    const bufferView = this.json.bufferViews[accessor.bufferView]
+    let accessorData = this.loadBufferView(bufferView).then(() => {})
+    return accessorData as Promise<Array<number>>
+  }
+
+  /**
+   * 加载bufferView
+   * {
+   *  buffer
+   *  byteLength
+   *  byteOffset
+   *  target
+   * }
+   * @param bufferView
+   * @returns
+   */
+  loadBufferView(bufferView: any) {
+    const buffer = this.json.buffers[bufferView.buffer]
+    bufferView.data = this.loadBuffer(
+      buffer,
+      bufferView.byteOffset || 0,
+      bufferView.byteLength
+    )
+    return bufferView.data
+  }
+
+  /**
+   * 加载buffer
+   * {
+   *  byteLength
+   *  uri
+   * }
+   * @param buffer
+   * @param byteOffset
+   * @param byteLength
+   */
+  loadBuffer(buffer: any, byteOffset: number, byteLength: number) {
+    if (!buffer.data) {
+    }
   }
 }
