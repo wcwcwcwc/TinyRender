@@ -211,7 +211,11 @@ export default class GLTFLoader {
     const attributes = primitives.attributes
     const accessor = this.json.accessors[primitives.indices]
     // indices
-    promises.push(this.loadIndices(accessor).then(() => {}))
+    promises.push(
+      this.loadIndices(accessor).then((data: any) => {
+        // 添加indices给tinyMesh
+      })
+    )
     return Promise.all(promises).then(() => {})
   }
 
@@ -222,8 +226,8 @@ export default class GLTFLoader {
    */
   loadIndices(accessor: any): Promise<Array<number>> {
     const bufferView = this.json.bufferViews[accessor.bufferView]
-    let accessorData = this.loadBufferView(bufferView).then(() => {})
-    return accessorData as Promise<Array<number>>
+    accessor.data = this.loadBufferView(bufferView).then((data: any) => {})
+    return accessor.data as Promise<Array<number>>
   }
 
   /**
@@ -239,6 +243,9 @@ export default class GLTFLoader {
    */
   loadBufferView(bufferView: any) {
     const buffer = this.json.buffers[bufferView.buffer]
+    if (bufferView.data) {
+      return bufferView.data
+    }
     bufferView.data = this.loadBuffer(
       buffer,
       bufferView.byteOffset || 0,
@@ -259,6 +266,39 @@ export default class GLTFLoader {
    */
   loadBuffer(buffer: any, byteOffset: number, byteLength: number) {
     if (!buffer.data) {
+      if (buffer.uri) {
+        buffer.data = this.loadUri(buffer.uri)
+      }
     }
+    return buffer.data.then((data: any) => {
+      try {
+        // 根据byteOffset和byteLength对buffer做裁剪
+        return new Uint8Array(
+          data.buffer,
+          data.byteOffset + byteOffset,
+          byteLength
+        )
+        // console.log(data)
+      } catch (error) {}
+    })
+  }
+
+  /**
+   * 加载uri,获取二进制buffer数据
+   * @param uri
+   */
+  loadUri(uri: string) {
+    return new Promise((resolve, reject) => {
+      loadFile(
+        this.path + uri,
+        data => {
+          resolve(new Uint8Array(data as ArrayBuffer))
+        },
+        undefined,
+        undefined,
+        true,
+        () => {}
+      )
+    })
   }
 }
