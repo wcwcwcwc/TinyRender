@@ -5,9 +5,24 @@
  * 3. 数据转换成本引擎支持的数据格式，如顶点属性、纹理、材质等
  */
 
+import { BufferAttribute } from '../data/BufferAttribute'
 import Engine from '../engine/Engine'
 import Mesh from '../mesh/Mesh'
 import { loadFile } from '../misc/Ajax'
+
+const enum ComponentType {
+  BYTE = 5120,
+
+  UNSIGNED_BYTE = 5121,
+
+  SHORT = 5122,
+
+  UNSIGNED_SHORT = 5123,
+
+  UNSIGNED_INT = 5125,
+
+  FLOAT = 5126
+}
 export default class GLTFLoader {
   engine: Engine
   path: string
@@ -214,6 +229,7 @@ export default class GLTFLoader {
     promises.push(
       this.loadIndices(accessor).then((data: any) => {
         // 添加indices给tinyMesh
+        tinyMesh.index = new BufferAttribute(data, 1, false)
       })
     )
     return Promise.all(promises).then(() => {})
@@ -226,7 +242,15 @@ export default class GLTFLoader {
    */
   loadIndices(accessor: any): Promise<Array<number>> {
     const bufferView = this.json.bufferViews[accessor.bufferView]
-    accessor.data = this.loadBufferView(bufferView).then((data: any) => {})
+    accessor.data = this.loadBufferView(bufferView).then((data: any) => {
+      // 数据转换到componentType对应的数据类型
+      return this._getTypedArray(
+        accessor.componentType,
+        data,
+        accessor.byteOffset,
+        accessor.count
+      )
+    })
     return accessor.data as Promise<Array<number>>
   }
 
@@ -300,5 +324,46 @@ export default class GLTFLoader {
         () => {}
       )
     })
+  }
+
+  /**
+   * 数据类型转换
+   * @param componentType
+   * @param bufferView
+   * @param byteOffset
+   * @param length
+   * @returns
+   */
+  _getTypedArray(
+    componentType: number,
+    bufferView: ArrayBufferView,
+    byteOffset: number | undefined,
+    length: number
+  ) {
+    const buffer = bufferView.buffer
+    byteOffset = bufferView.byteOffset + (byteOffset || 0)
+    const componentTypeConstructor = this._getTypedArrayConstructor(
+      componentType
+    )
+    return new componentTypeConstructor(buffer, byteOffset, length)
+  }
+
+  _getTypedArrayConstructor(componentType: number) {
+    switch (componentType) {
+      case ComponentType.BYTE:
+        return Int8Array
+      case ComponentType.UNSIGNED_BYTE:
+        return Uint8Array
+      case ComponentType.SHORT:
+        return Int16Array
+      case ComponentType.UNSIGNED_SHORT:
+        return Uint16Array
+      case ComponentType.UNSIGNED_INT:
+        return Uint32Array
+      case ComponentType.FLOAT:
+        return Float32Array
+      default:
+        throw new Error(`Invalid component type ${componentType}`)
+    }
   }
 }
