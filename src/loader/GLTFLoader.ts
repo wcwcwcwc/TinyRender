@@ -7,6 +7,8 @@
 
 import { BufferAttribute } from '../data/BufferAttribute'
 import Engine from '../engine/Engine'
+import PBRMaterial from '../material/PBRMaterial'
+import { Color3 } from '../math/Color'
 import Mesh from '../mesh/Mesh'
 import { loadFile } from '../misc/Ajax'
 
@@ -203,6 +205,13 @@ export default class GLTFLoader {
 
     // material
 
+    if (primitives.material == undefined) {
+      // TODO:如果没有材质属性时,采用默认材质
+    } else {
+      const material = this.json.materials[primitives.material]
+      promises.push(this.loadMaterial(material).then(() => {}))
+    }
+
     callback(tinyMesh)
     promise = Promise.all(promises)
     return promise.then(() => {
@@ -211,7 +220,110 @@ export default class GLTFLoader {
   }
 
   /**
-   * 记载顶点
+   * 加载纹理
+   * {
+   *  emissiveFactor:[]
+   *  emissiveTexture:{index:3(对应textures)}
+   *  normalTexture
+   *  occlusionTexture
+   *  pbrMetallicRoughness
+   *
+   * }
+   * @param material
+   */
+  loadMaterial(material: any) {
+    if (!material.data) {
+      const tinyMaterial = this.createMaterial(material)
+      material.data = {
+        tinyMaterial,
+        promise: this.loadMaterialProperties(material, tinyMaterial)
+      }
+    }
+
+    return material.data.promise.then(() => {
+      return material.data.tinyMaterial
+    })
+  }
+
+  /**
+   * 加载材质参数, gltf材质到tiny材质
+   * 材质分为两大类:基础类材质和PBR材质
+   * @param material
+   * @param tinyMaterial
+   */
+  loadMaterialProperties(material: any, tinyMaterial: PBRMaterial) {
+    const promises = new Array<Promise<any>>()
+
+    // 基础类材质
+    promises.push(this.loadMaterialBaseProperties(material, tinyMaterial))
+
+    // PBR材质
+    if (material.pbrMetallicRoughness) {
+      promises.push(
+        this.loadMaterialMetallicRoughnessProperties(
+          material.pbrMetallicRoughness,
+          tinyMaterial
+        )
+      )
+    }
+
+    return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * 基础类材质:{
+   *    normal
+   *    emissiveFactor
+   *    occlusionTexture
+   *    ...
+   * }
+   * @param material
+   * @param tinyMaterial
+   */
+  loadMaterialBaseProperties(material: any, tinyMaterial: PBRMaterial) {
+    const promises = new Array<Promise<any>>()
+    tinyMaterial.emissiveColor = material.emissiveFactor
+      ? new Color3(
+          material.emissiveFactor[0],
+          material.emissiveFactor[1],
+          material.emissiveFactor[2]
+        )
+      : new Color3(0, 0, 0)
+    return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * PBR材质:{
+   *    baseColorTexture
+   *    metallicRoughnessTexture
+   * }
+   * @param pbrMetallicRoughness
+   * @param tinyMaterial
+   */
+  loadMaterialMetallicRoughnessProperties(
+    pbrMetallicRoughness: any,
+    tinyMaterial: PBRMaterial
+  ) {
+    const promises = new Array<Promise<any>>()
+    return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * 创建PBR材质
+   * @param material
+   * @returns
+   */
+  createMaterial(material: any) {
+    const tinyMaterial = new PBRMaterial(this.engine, {
+      metallic: 1,
+      roughness: 1
+    })
+    return tinyMaterial
+  }
+
+  /**
+   * 加载顶点索引和属性
+   * 由于没有mesh的geometry对象,所以在这一步直接绑定索引和属性到mesh
    * {
    *  attributes
    *  indices
@@ -224,14 +336,45 @@ export default class GLTFLoader {
   loadVertexData(primitives: any, tinyMesh: Mesh, callback: Function) {
     const promises = new Array<Promise<any>>()
     const attributes = primitives.attributes
-    const accessor = this.json.accessors[primitives.indices]
-    // indices
-    promises.push(
-      this.loadIndices(accessor).then((data: any) => {
-        // 添加indices给tinyMesh
-        tinyMesh.index = new BufferAttribute(data, 1, false)
-      })
-    )
+    if (primitives.indices != undefined) {
+      const accessor = this.json.accessors[primitives.indices]
+      // indices部分
+      promises.push(
+        this.loadIndices(accessor).then((data: any) => {
+          // console.log('index',data)
+          // 添加indices给tinyMesh
+          tinyMesh.index = new BufferAttribute(data, 1, false)
+        })
+      )
+    }
+
+    // attributes部分
+    const loadAttribute = (
+      attribute: string,
+      attributeName: string,
+      callback?: Function
+    ) => {
+      if (attributes[attribute] == undefined) {
+        return
+      }
+      const accessor = this.json.accessors[attributes[attribute]]
+      promises.push(
+        this.loadVertex(accessor, attributeName).then(data => {
+          const numComponents = this._getNumComponents(accessor.type)
+          console.log(attributeName, data)
+          tinyMesh.attributes[attributeName] = new BufferAttribute(
+            data,
+            numComponents,
+            false
+          )
+        })
+      )
+    }
+    loadAttribute('POSITION', 'a_position')
+    loadAttribute('NORMAL', 'a_normal')
+    loadAttribute('TEXCOORD_0', 'a_uv')
+    loadAttribute('TANGENT', 'a_tangent')
+
     return Promise.all(promises).then(() => {})
   }
 
@@ -243,12 +386,36 @@ export default class GLTFLoader {
   loadIndices(accessor: any): Promise<Array<number>> {
     const bufferView = this.json.bufferViews[accessor.bufferView]
     accessor.data = this.loadBufferView(bufferView).then((data: any) => {
+      const numComponents = this._getNumComponents(accessor.type)
+      const length = numComponents * accessor.count
       // 数据转换到componentType对应的数据类型
       return this._getTypedArray(
         accessor.componentType,
         data,
         accessor.byteOffset,
-        accessor.count
+        length
+      )
+    })
+    return accessor.data as Promise<Array<number>>
+  }
+
+  /**
+   * 加载顶点属性attribute
+   * @param accessor
+   * @param attributeName
+   */
+  loadVertex(accessor: any, attributeName: string) {
+    const bufferView = this.json.bufferViews[accessor.bufferView]
+    accessor.data = this.loadBufferView(bufferView).then((data: any) => {
+      const numComponents = this._getNumComponents(accessor.type)
+      const length = numComponents * accessor.count
+
+      // 数据转换到componentType对应的数据类型
+      return this._getTypedArray(
+        accessor.componentType,
+        data,
+        accessor.byteOffset,
+        length
       )
     })
     return accessor.data as Promise<Array<number>>
@@ -365,5 +532,26 @@ export default class GLTFLoader {
       default:
         throw new Error(`Invalid component type ${componentType}`)
     }
+  }
+
+  _getNumComponents(type: string) {
+    switch (type) {
+      case 'SCALAR':
+        return 1
+      case 'VEC2':
+        return 2
+      case 'VEC3':
+        return 3
+      case 'VEC4':
+        return 4
+      case 'MAT2':
+        return 4
+      case 'MAT3':
+        return 9
+      case 'MAT4':
+        return 16
+    }
+
+    throw new Error(` Invalid type (${type})`)
   }
 }

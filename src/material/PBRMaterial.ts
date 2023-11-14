@@ -24,7 +24,7 @@ import Texture2D from '../texture/Texture2D'
 // 该类默认金属工作流
 
 interface PBRMaterialOptions {
-  baseColor: Color4
+  baseColor: string
   baseColorTexture: Texture
   metallic: number
   roughness: number
@@ -52,13 +52,13 @@ interface PBRMaterialOptions {
  *
  */
 export default class PBRMaterial extends Material {
-  public baseColor: Color4
-  public baseColorTexture: Texture
+  public baseColor: string | undefined
+  public baseColorTexture: Texture | undefined
   public metallic: number
   public roughness: number
-  public metallicRoughnessTexture: Texture
-  public reflectionTexture: TextureCube
-  public environmentBRDFTexture: Texture
+  public metallicRoughnessTexture: Texture | undefined
+  public reflectionTexture: TextureCube | undefined
+  public environmentBRDFTexture: Texture | undefined
   public metallicF0Factor: number = 1
   public f0: number = 0.04
   public f90: number = 1
@@ -89,9 +89,11 @@ export default class PBRMaterial extends Material {
   private readonly _lodGenerationOffset = 0
   private readonly _lodGenerationScale = 0.8
 
-  constructor(engine: Engine, options: PBRMaterialOptions) {
+  constructor(engine: Engine, options: Partial<PBRMaterialOptions>) {
     super({
-      color: options.baseColor.toString()
+      color:
+        (options && options.baseColor && options.baseColor.toString()) ||
+        'rgba(1,1,1,1)'
     })
     this.engine = engine
     this.gl = engine._gl
@@ -143,10 +145,11 @@ export default class PBRMaterial extends Material {
     this._prefilteredEnvironmentMapEnabled = value
     if (value) {
       // 环境贴图未加载时，需要添加进贴图完成回调中
-      if (!this.reflectionTexture.loaded) {
-        this.reflectionTexture.addLoadedCallback(
-          this.createPrefilteredEnvironmentMap.bind(this)
-        )
+      if (!(this.reflectionTexture && this.reflectionTexture.loaded)) {
+        this.reflectionTexture &&
+          this.reflectionTexture.addLoadedCallback(
+            this.createPrefilteredEnvironmentMap.bind(this)
+          )
       } else {
         //环境贴图加载完成，直接生成irradianceMap
         this.createPrefilteredEnvironmentMap()
@@ -167,10 +170,11 @@ export default class PBRMaterial extends Material {
     this._irradianceMapEnabled = value
     if (value) {
       // 环境贴图未加载时，需要添加进贴图完成回调中
-      if (!this.reflectionTexture.loaded) {
-        this.reflectionTexture.addLoadedCallback(
-          this.createIrradianceMap.bind(this)
-        )
+      if (!(this.reflectionTexture && this.reflectionTexture.loaded)) {
+        this.reflectionTexture &&
+          this.reflectionTexture.addLoadedCallback(
+            this.createIrradianceMap.bind(this)
+          )
       } else {
         //环境贴图加载完成，直接生成irradianceMap
         this.createIrradianceMap()
@@ -208,7 +212,7 @@ export default class PBRMaterial extends Material {
       const mipmapsCount = Math.round(Math.log(textureWidth) * Math.LOG2E)
 
       // 创建基于屏幕的纹理贴图材质
-      if (!this.effecter) {
+      if (!this.effecter && this.reflectionTexture) {
         this.effecter = new EffectMaterial(this.engine, {
           name: 'irradianceMap',
           fragment: irradianceMapFS,
@@ -300,7 +304,7 @@ export default class PBRMaterial extends Material {
       const mipmapsCount = Math.round(Math.log(textureWidth) * Math.LOG2E)
 
       // 创建基于屏幕的纹理贴图材质
-      if (!this.prefilteredEnvironmentMapEffecter) {
+      if (!this.prefilteredEnvironmentMapEffecter && this.reflectionTexture) {
         this.prefilteredEnvironmentMapEffecter = new EffectMaterial(
           this.engine,
           {
@@ -430,11 +434,11 @@ export default class PBRMaterial extends Material {
     }
   }
   public isReadyToDraw() {
-    if (!this.reflectionTexture.loaded) {
+    if (!(this.reflectionTexture && this.reflectionTexture.loaded)) {
       return false
     }
 
-    if (!this.environmentBRDFTexture.loaded) {
+    if (!(this.environmentBRDFTexture && this.environmentBRDFTexture.loaded)) {
       return false
     }
 
@@ -473,11 +477,11 @@ export default class PBRMaterial extends Material {
         this.defines.push('#define SPHERICALHARMONICS_ENABLED')
       }
 
-      if (this.reflectionTexture.isInvCubic) {
+      if (this.reflectionTexture && this.reflectionTexture.isInvCubic) {
         this.defines.push('#define INVCUBIC')
       }
 
-      if (this.reflectionTexture.gammaSpace) {
+      if (this.reflectionTexture && this.reflectionTexture.gammaSpace) {
         this.defines.push('#define GAMMAREFLECTION')
       }
 
@@ -538,12 +542,19 @@ export default class PBRMaterial extends Material {
       }
       if (key === 'u_environmentBrdfSampler') {
         gl.activeTexture(gl.TEXTURE1)
-        gl.bindTexture(gl.TEXTURE_2D, this.environmentBRDFTexture.webglTexture)
+        gl.bindTexture(
+          gl.TEXTURE_2D,
+          this.environmentBRDFTexture &&
+            this.environmentBRDFTexture.webglTexture
+        )
         gl.uniform1i(uniformLocation, 1)
       }
       if (key === 'u_reflectionSampler') {
         gl.activeTexture(gl.TEXTURE2)
-        gl.bindTexture(gl.TEXTURE_CUBE_MAP, this.reflectionTexture.webglTexture)
+        gl.bindTexture(
+          gl.TEXTURE_CUBE_MAP,
+          this.reflectionTexture && this.reflectionTexture.webglTexture
+        )
         gl.uniform1i(uniformLocation, 2)
       }
       if (key === 'u_irradianceMapSampler') {
@@ -568,7 +579,7 @@ export default class PBRMaterial extends Material {
       if (key === 'u_reflectivityColor') {
         gl.uniform4f(uniformLocation, this.metallic, this.roughness, this.f0, 1)
       }
-      if (key === 'u_reflectionMicrosurfaceInfos') {
+      if (key === 'u_reflectionMicrosurfaceInfos' && this.reflectionTexture) {
         gl.uniform3f(
           uniformLocation,
           this.reflectionTexture.width,
@@ -589,7 +600,7 @@ export default class PBRMaterial extends Material {
         mat4array.set([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])
         gl.uniformMatrix4fv(uniformLocation, false, mat4array)
       }
-      if (key === 'u_reflectionFilteringInfo') {
+      if (key === 'u_reflectionFilteringInfo' && this.reflectionTexture) {
         gl.uniform2f(
           uniformLocation,
           this.reflectionTexture.width,
@@ -621,7 +632,7 @@ export default class PBRMaterial extends Material {
           this.specularIntensity
         )
       }
-      if (this.irradianceSHEnabled) {
+      if (this.irradianceSHEnabled && this.reflectionTexture) {
         let SH = this.reflectionTexture.sphericalHarmonics
         if (SH) {
           switch (key) {
