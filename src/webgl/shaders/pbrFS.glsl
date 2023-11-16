@@ -338,6 +338,10 @@ void main() {
     float alpha = u_baseColor.a;
     // ao
     vec3 ambientOcclusionColor = vec3(1., 1., 1.);
+    // 存在AO贴图时
+    #ifdef AMBIENT_OCCLUSION_TEXTURE
+        ambientOcclusionColor = texture(u_ambientOcclusionTextureSampler, v_mainUV1).rgb;
+    #endif
     vec3 baseColor = surfaceAlbedo;
 
     // 金属度粗糙度纹理
@@ -376,7 +380,7 @@ void main() {
     vec3 specularEnvironmentR0 = reflectivityOut.surfaceReflectivityColor.rgb;
     vec3 specularEnvironmentR90 = vec3(metallicReflectanceFactors.a);
     vec3 specularEnvironmentReflectance = getReflectanceFromBRDFLookup(specularEnvironmentR0, specularEnvironmentR90, environmentBrdf);
-    
+
     // 补偿漏光
     specularEnvironmentReflectance *= eho;
 
@@ -409,7 +413,7 @@ void main() {
     finalEmissive *= u_lightingIntensity.y;
     // ao
     finalAmbient *= ambientOcclusionColor;
-    finalDiffuse *= ambientOcclusionColor;
+    finalDiffuse *= 1.0;
 
     vec4 finalColor = vec4(
     finalAmbient +
