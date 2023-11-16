@@ -21,6 +21,18 @@ uniform vec4 u_lightingIntensity;
     uniform samplerCube u_prefilteredEnvironmentMapSampler;
 #endif
 
+#ifdef NORMAL_TEXTURE
+    uniform sampler2D u_normalTextureSampler;
+#endif
+
+#ifdef EMISSIVE_TEXTURE
+    uniform sampler2D u_emissiveTextureSampler;
+#endif
+
+#ifdef AMBIENT_OCCLUSION_TEXTURE
+    uniform sampler2D u_ambientOcclusionTextureSampler;
+#endif
+
 #include <sphericalHarmonicsIrradianceDeclaration>
 
 in vec3 v_worldPosition;
@@ -95,6 +107,37 @@ out reflectivityOutParams outParams
     outParams.microSurface = microSurface;
     outParams.roughness = roughness;
     outParams.surfaceReflectivityColor = surfaceReflectivityColor;
+}
+
+// 采用屏幕偏微分,近似求取TBN矩阵,在模型边缘可能效果不太好
+// 用于法线贴图中的法线转为世界坐标下的法线
+mat3 cotangent_frame(vec3 normal, vec3 p, vec2 uv, vec2 tangentSpaceParams) {
+    vec3 dp1 = dFdx(p);
+    vec3 dp2 = dFdy(p);
+    vec2 duv1 = dFdx(uv);
+    vec2 duv2 = dFdy(uv);
+    vec3 dp2perp = cross(dp2, normal);
+    vec3 dp1perp = cross(normal, dp1);
+    vec3 tangent = dp2perp*duv1.x+dp1perp*duv2.x;
+    vec3 bitangent = dp2perp*duv1.y+dp1perp*duv2.y;
+    tangent *= tangentSpaceParams.x;
+    bitangent *= tangentSpaceParams.y;
+    float invmax = inversesqrt(max(dot(tangent, tangent), dot(bitangent, bitangent)));
+    return mat3(tangent*invmax, bitangent*invmax, normal);
+}
+
+vec3 perturbNormalBase(mat3 cotangentFrame, vec3 normal, float scale) {
+    normal = normalize(normal*vec3(scale, scale, 1.0));
+    return normalize(cotangentFrame*normal);
+}
+vec3 perturbNormal(mat3 cotangentFrame, vec3 textureSample, float scale) {
+    return perturbNormalBase(cotangentFrame, textureSample*2.0-1.0, scale);
+}
+
+float environmentHorizonOcclusion(vec3 view, vec3 normal, vec3 geometricNormal) {
+    vec3 reflection = reflect(view, normal);
+    float temp = saturate(1.0+1.1*dot(reflection, geometricNormal));
+    return square(temp);
 }
 
 vec3 getBRDFLookup(float NdotV, float perceptualRoughness) {
@@ -281,6 +324,15 @@ in vec3 vPositionW, in vec3 normalW, in float alphaG, in vec3 vReflectionMicrosu
 void main() {
     vec3 viewDirectionW = normalize(u_eyePosition-v_worldPosition);
     vec3 normalW = normalize(v_normal);
+    // 保存真实片元的法向
+    vec3 trueNormalW = normalW;
+
+    // 如果有法线贴图,法线贴图中的法线通过TBN矩阵转为世界坐标下的法线
+    #ifdef NORMAL_TEXTURE
+        mat3 TBN = cotangent_frame(normalW, vec3(v_worldPosition), v_mainUV1, vec2(1.0, -1.0));
+        normalW = perturbNormal(TBN, texture(u_normalTextureSampler, v_mainUV1).xyz, 1.0);
+    #endif 
+
     // albedo
     vec3 surfaceAlbedo = u_baseColor.rgb;
     float alpha = u_baseColor.a;
@@ -313,6 +365,9 @@ void main() {
     float alphaG = square(roughness)+0.0005; // 粗糙度平方
     // brdfLUT的采样
     vec3 environmentBrdf = getBRDFLookup(NdotV, roughness);
+
+    // 存在法线贴图时,计算出来的反射方向有时候会在片元下面,这部分高光仍然着色器的话,会造成漏光,因此eho用于补偿
+    float eho = environmentHorizonOcclusion(-viewDirectionW, normalW, trueNormalW);
     reflectionOutParams reflectionOut;
     // 计算漫反射irrdiance和镜面反射radiance的前半部分
     reflectionBlock(
@@ -321,6 +376,9 @@ void main() {
     vec3 specularEnvironmentR0 = reflectivityOut.surfaceReflectivityColor.rgb;
     vec3 specularEnvironmentR90 = vec3(metallicReflectanceFactors.a);
     vec3 specularEnvironmentReflectance = getReflectanceFromBRDFLookup(specularEnvironmentR0, specularEnvironmentR90, environmentBrdf);
+    
+    // 补偿漏光
+    specularEnvironmentReflectance *= eho;
 
     vec3 finalIrradiance = reflectionOut.environmentIrradiance;
     // surfaceAlbedo 包含了发生漫反射的系数，即1-F0
@@ -341,6 +399,13 @@ void main() {
     finalAmbient *= surfaceAlbedo.rgb;
     // 自发光
     vec3 finalEmissive = u_emissiveColor;
+
+    // 存在自发光贴图时
+    #ifdef EMISSIVE_TEXTURE
+        vec3 emissiveColorTex = texture(emissiveSampler, v_mainUV1).rgb;
+         finalEmissive *= toLinearSpace(emissiveColorTex.rgb);
+    #endif
+
     finalEmissive *= u_lightingIntensity.y;
     // ao
     finalAmbient *= ambientOcclusionColor;

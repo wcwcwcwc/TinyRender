@@ -40,6 +40,9 @@ interface PBRMaterialOptions {
   reflectionColor: Color3
   irradianceMapEnabled: boolean
   irradianceSHEnabled: boolean
+  normalTexture: Texture
+  emissiveTexture: Texture
+  ambientOcclusionTexture: Texture
 }
 
 /**
@@ -81,6 +84,9 @@ export default class PBRMaterial extends Material {
   public prefilteredEnvironmentMapEffecter: EffectMaterial
   public blitIrradianceMapEffecter: EffectMaterial
   public environmentBRDFTextureEffecter: EffectMaterial
+  public normalTexture: Texture | undefined
+  public emissiveTexture: Texture | undefined
+  public ambientOcclusionTexture: Texture | undefined
 
   private _irradianceMapEnabled: boolean = false
   private _prefilteredEnvironmentMapEnabled: boolean = false
@@ -485,6 +491,16 @@ export default class PBRMaterial extends Material {
         this.defines.push('#define GAMMAREFLECTION')
       }
 
+      if (this.normalTexture && this.normalTexture.loaded) {
+        this.defines.push('#define NORMAL_TEXTURE')
+      }
+      if (this.emissiveTexture && this.emissiveTexture.loaded) {
+        this.defines.push('#define EMISSIVE_TEXTURE')
+      }
+      if (this.ambientOcclusionTexture && this.ambientOcclusionTexture.loaded) {
+        this.defines.push('#define AMBIENT_OCCLUSION_TEXTURE')
+      }
+
       // 输入金属度粗糙度贴图时
       if (this.metallicRoughnessTexture) {
         this.defines.push('#define METALLICROUGHNESSTEXTURE_ENABLED')
@@ -632,6 +648,34 @@ export default class PBRMaterial extends Material {
           this.specularIntensity
         )
       }
+      if (
+        key === 'u_normalTextureSampler' &&
+        this.normalTexture &&
+        this.normalTexture.loaded
+      ) {
+        gl.activeTexture(gl.TEXTURE5)
+        gl.bindTexture(gl.TEXTURE_2D, this.normalTexture.webglTexture)
+        gl.uniform1i(uniformLocation, 5)
+      }
+      if (
+        key === 'u_emissiveTextureSampler' &&
+        this.emissiveTexture &&
+        this.emissiveTexture.loaded
+      ) {
+        gl.activeTexture(gl.TEXTURE6)
+        gl.bindTexture(gl.TEXTURE_2D, this.emissiveTexture.webglTexture)
+        gl.uniform1i(uniformLocation, 6)
+      }
+      if (
+        key === 'u_ambientOcclusionTextureSampler' &&
+        this.ambientOcclusionTexture &&
+        this.ambientOcclusionTexture.loaded
+      ) {
+        gl.activeTexture(gl.TEXTURE7)
+        gl.bindTexture(gl.TEXTURE_2D, this.ambientOcclusionTexture.webglTexture)
+        gl.uniform1i(uniformLocation, 7)
+      }
+
       if (this.irradianceSHEnabled && this.reflectionTexture) {
         let SH = this.reflectionTexture.sphericalHarmonics
         if (SH) {
