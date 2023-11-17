@@ -11,6 +11,9 @@ import PBRMaterial from '../material/PBRMaterial'
 import { Color3 } from '../math/Color'
 import Mesh from '../mesh/Mesh'
 import { loadFile } from '../misc/Ajax'
+import CONSTANTS from '../texture/Constants'
+import Texture from '../texture/Texture'
+import Texture2D from '../texture/Texture2D'
 
 const enum ComponentType {
   BYTE = 5120,
@@ -289,7 +292,141 @@ export default class GLTFLoader {
           material.emissiveFactor[2]
         )
       : new Color3(0, 0, 0)
+    if (material.normalTexture) {
+      promises.push(
+        this.loadTextureInfo(material.normalTexture, (tinyTexture: Texture) => {
+          tinyMaterial.normalTexture = tinyTexture
+          console.log('normalTexture', tinyTexture.loaded, tinyTexture)
+        })
+      )
+    }
+    if (material.occlusionTexture) {
+      promises.push(
+        this.loadTextureInfo(
+          material.occlusionTexture,
+          (tinyTexture: Texture) => {
+            tinyMaterial.ambientOcclusionTexture = tinyTexture
+            console.log('occlusionTexture', tinyTexture.loaded, tinyTexture)
+          }
+        )
+      )
+    }
+    if (material.emissiveTexture) {
+      promises.push(
+        this.loadTextureInfo(
+          material.emissiveTexture,
+          (tinyTexture: Texture) => {
+            tinyMaterial.emissiveTexture = tinyTexture
+            console.log('emissiveTexture', tinyTexture.loaded, tinyTexture)
+          }
+        )
+      )
+    }
     return Promise.all(promises).then(() => {})
+  }
+
+  /**
+   * textures
+   * [
+   *  {sampler: 0, source: 0, index: 0}
+   *  {sampler: 0, source: 1, index: 1}
+   *  {sampler: 0, source: 2, index: 2}
+   *  {sampler: 0, source: 3, index: 3}
+   *  {sampler: 0, source: 4, index: 4}
+   * ]
+   * @param textureInfo
+   * @param callback
+   * @returns
+   */
+  loadTextureInfo(textureInfo: any, callback: Function) {
+    const texture = this.json.textures[textureInfo.index]
+    const promise = this.loadTexture(texture, (tinyTexture: Texture) => {
+      callback(tinyTexture)
+    })
+
+    return promise
+  }
+
+  /**
+   * sampler:纹理采样方式
+   * image：纹理数据
+   * @param texture
+   * @param callback
+   * @returns
+   */
+  loadTexture(texture: any, callback: Function) {
+    const sampler =
+      texture.sampler == undefined
+        ? { index: -1 }
+        : this.json.samplers[texture.sampler]
+    const image = this.json.images[texture.source]
+    const promise = this.createTexture(sampler, image).then(
+      (tinyTexture: Texture) => {
+        callback(tinyTexture)
+      }
+    )
+    return promise
+  }
+
+  /**
+   * 创建texture2D
+   * @param sampler
+   * @param image
+   * @param callback
+   * @returns
+   */
+  createTexture(sampler: any, image: any) {
+    const samplerData = this.loadSampler(sampler)
+    const promises = new Array<Promise<any>>()
+
+    const tinyTexture = new Texture2D(this.engine, this.path + image.uri, {
+      noMipmap: samplerData.noMipMaps,
+      magFilter: samplerData.magFilter,
+      minFilter: samplerData.minFilter,
+      wrapS: samplerData.wrapS,
+      wrapT: samplerData.wrapT
+    })
+    promises.push(
+      new Promise((resolve, reject) => {
+        tinyTexture.addLoadedCallback(() => {
+          resolve(tinyTexture)
+        })
+      })
+    )
+
+    return Promise.all(promises).then(() => {
+      return tinyTexture
+    })
+  }
+
+  /**
+   * 设置采样方式
+   * {
+   *  minFilter
+   *  magFilter
+   *  wrapS
+   *  wrapT
+   * }
+   * @param sampler
+   * @returns
+   */
+  loadSampler(sampler: any) {
+    if (!sampler.data) {
+      sampler.data = {
+        noMipMaps:
+          sampler.minFilter === CONSTANTS.NEAREST ||
+          sampler.minFilter === CONSTANTS.LINEAR,
+        magFilter:
+          sampler.magFilter == undefined ? CONSTANTS.LINEAR : sampler.magFilter,
+        minFilter:
+          sampler.minFilter == undefined
+            ? CONSTANTS.LINEAR_MIPMAP_LINEAR
+            : sampler.minFilter,
+        wrapS: sampler.wrapS == undefined ? CONSTANTS.REPEAT : sampler.wrapS,
+        wrapT: sampler.wrapT == undefined ? CONSTANTS.REPEAT : sampler.wrapT
+      }
+    }
+    return sampler.data
   }
 
   /**
@@ -361,7 +498,7 @@ export default class GLTFLoader {
       promises.push(
         this.loadVertex(accessor, attributeName).then(data => {
           const numComponents = this._getNumComponents(accessor.type)
-          console.log(attributeName, data)
+          // console.log(attributeName, data)
           tinyMesh.attributes[attributeName] = new BufferAttribute(
             data,
             numComponents,

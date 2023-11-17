@@ -177,7 +177,7 @@ export default class Texture {
       img
     )
     if (!this.noMipmap) {
-      gl.generateMipmap(gl.TEXTURE_CUBE_MAP)
+      gl.generateMipmap(this.target)
     }
     gl.bindTexture(target, null)
     this.loaded = true
