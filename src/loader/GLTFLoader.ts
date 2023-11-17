@@ -269,6 +269,7 @@ export default class GLTFLoader {
         )
       )
     }
+    // TODO：材质是否透明,渲染队列判别
 
     return Promise.all(promises).then(() => {})
   }
@@ -442,6 +443,49 @@ export default class GLTFLoader {
     tinyMaterial: PBRMaterial
   ) {
     const promises = new Array<Promise<any>>()
+    if (pbrMetallicRoughness) {
+      if (pbrMetallicRoughness.baseColorFactor) {
+        tinyMaterial.baseColor = `rgb(${pbrMetallicRoughness.baseColorFactor[0]},${pbrMetallicRoughness.baseColorFactor[1]},${pbrMetallicRoughness.baseColorFactor[2]},${pbrMetallicRoughness.baseColorFactor[3]})`
+      } else {
+        tinyMaterial.baseColor = 'rgba(1,1,1,1)'
+      }
+
+      tinyMaterial.metallic =
+        pbrMetallicRoughness.metallicFactor == undefined
+          ? 1
+          : pbrMetallicRoughness.metallicFactor
+      tinyMaterial.roughness =
+        pbrMetallicRoughness.roughnessFactor == undefined
+          ? 1
+          : pbrMetallicRoughness.roughnessFactor
+
+      if (pbrMetallicRoughness.baseColorTexture) {
+        promises.push(
+          this.loadTextureInfo(
+            pbrMetallicRoughness.baseColorTexture,
+            (tinyTexture: Texture) => {
+              tinyMaterial.baseColorTexture = tinyTexture
+              console.log('baseColorTexture', tinyTexture.loaded, tinyTexture)
+            }
+          )
+        )
+      }
+      if (pbrMetallicRoughness.metallicRoughnessTexture) {
+        promises.push(
+          this.loadTextureInfo(
+            pbrMetallicRoughness.metallicRoughnessTexture,
+            (tinyTexture: Texture) => {
+              tinyMaterial.metallicRoughnessTexture = tinyTexture
+              console.log(
+                'metallicRoughnessTexture',
+                tinyTexture.loaded,
+                tinyTexture
+              )
+            }
+          )
+        )
+      }
+    }
     return Promise.all(promises).then(() => {})
   }
 
