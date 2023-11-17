@@ -52,6 +52,8 @@
     new TinyRender.GLTFLoader(renderer, "https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf", (gltf) => {
       gltf.map(mesh => {
         mesh.material.reflectionTexture = environmentTexture
+        mesh.material.irradianceSHEnabled = true;
+        mesh.material.prefilteredEnvironmentMapEnabled = true
         renderer.addMesh(mesh)
       })
 
