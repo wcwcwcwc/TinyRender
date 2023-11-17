@@ -417,7 +417,7 @@ void main() {
 
     // 存在自发光贴图时
     #ifdef EMISSIVE_TEXTURE
-        vec3 emissiveColorTex = texture(emissiveSampler, v_mainUV1).rgb;
+        vec3 emissiveColorTex = texture(u_emissiveTextureSampler, v_mainUV1).rgb;
          finalEmissive *= toLinearSpace(emissiveColorTex.rgb);
     #endif
 

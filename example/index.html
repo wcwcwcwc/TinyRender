@@ -27,51 +27,57 @@
   <script src="../dist/tinyRender.umd.js"></script>
   <script type="module">
     import { GUI } from './utils/dat.gui.module.js'
-      // 实例化引擎
-      let renderer = new TinyRender.Engine({
-        container: 'webglDOM'
+    // 实例化引擎
+    let renderer = new TinyRender.Engine({
+      container: 'webglDOM'
+    })
+    // 添加相机
+    let camera = new TinyRender.PerspectiveCamera(
+      {
+        fov: 75,
+        aspect: window.innerWidth / window.innerHeight,
+        nearZ: 1,
+        farZ: 1000
+      },
+      renderer.canvas
+    )
+    camera.setPosition([0, 0, -3])
+    camera.lookAt = [0, 0, 0]
+    renderer.addCamera(camera)
+    // 设置相机可交互
+    renderer.addCameraOrbitControls()
+
+    let environmentTexture = new TinyRender.HDRCubeTexture(renderer, './assets/texture/environment.hdr', 512);
+
+    new TinyRender.GLTFLoader(renderer, "https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf", (gltf) => {
+      gltf.map(mesh => {
+        mesh.material.reflectionTexture = environmentTexture
+        renderer.addMesh(mesh)
       })
-      // 添加相机
-      let camera = new TinyRender.PerspectiveCamera(
-        {
-          fov: 75,
-          aspect: window.innerWidth / window.innerHeight,
-          nearZ: 1,
-          farZ: 1000
-        },
-        renderer.canvas
-      )
-      camera.setPosition([0,0,-80])
-      camera.lookAt = [0, 0, 0]
-      renderer.addCamera(camera)
-      // 设置相机可交互
-      renderer.addCameraOrbitControls()
 
-      new TinyRender.GLTFLoader(renderer,"https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf",(gltf)=>{
+      console.log(gltf)
+    })
 
 
-      })
+    // gui
+    const effectController = {
+    }
 
+    function initGUI() {
+      const gui = new GUI()
+    }
+    initGUI()
 
-      // gui
-      const effectController = {
-      }
+    function animate() {
+      requestAnimationFrame(animate)
+      renderer.render()
+    }
 
-      function initGUI() {
-        const gui = new GUI()
-      }
-      initGUI()
+    renderer.render();
 
-      function animate() {
-        requestAnimationFrame(animate)
-        renderer.render()
-      }
-
-      // renderer.render();
-
-      animate()
-      console.log(renderer)
-    </script>
+    animate()
+    console.log(renderer)
+  </script>
 </body>
 
 </html>

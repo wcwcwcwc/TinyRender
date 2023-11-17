@@ -7,6 +7,7 @@
 
 import { BufferAttribute } from '../data/BufferAttribute'
 import Engine from '../engine/Engine'
+import Material from '../material/Material'
 import PBRMaterial from '../material/PBRMaterial'
 import { Color3 } from '../math/Color'
 import Mesh from '../mesh/Mesh'
@@ -96,7 +97,7 @@ export default class GLTFLoader {
    * 从整个gltf_json开始往下加载
    * @returns
    */
-  loadJson(): Promise<void> {
+  loadJson(): Promise<any> {
     return Promise.resolve().then(() => {
       const promises = new Array<Promise<any>>()
       if (
@@ -104,7 +105,11 @@ export default class GLTFLoader {
         (this.json.scenes && this.json.scenes[0])
       ) {
         const scene = this.json.scenes[this.json.scene || 0]
-        promises.push(this.loadScene(scene))
+        promises.push(
+          this.loadScene(scene).then((meshArray: Array<Mesh>) => {
+            this.callback(meshArray)
+          })
+        )
       }
     })
   }
@@ -114,15 +119,22 @@ export default class GLTFLoader {
    * @param scene
    * @returns
    */
-  loadScene(scene: any): Promise<void> {
+  loadScene(scene: any): Promise<any> {
     const promises = new Array<Promise<any>>()
+    let meshArray: Array<Mesh> = []
     if (scene.nodes) {
       for (const index of scene.nodes) {
         const node = this.json.nodes[index]
-        promises.push(this.loadNode(node))
+        promises.push(
+          this.loadNode(node).then((tinyMesh: Mesh) => {
+            meshArray.push(tinyMesh)
+          })
+        )
       }
     }
-    return Promise.all(promises).then(() => {})
+    return Promise.all(promises).then(() => {
+      return meshArray
+    })
   }
 
   /**
@@ -135,15 +147,21 @@ export default class GLTFLoader {
    * @param node
    * @returns
    */
-  loadNode(node: any): Promise<void> {
+  loadNode(node: any): Promise<any> {
     const promises = new Array<Promise<any>>()
     const meshIndex = node.mesh
     if (meshIndex !== undefined) {
       const mesh = this.json.meshes[meshIndex]
-      promises.push(this.loadMesh(mesh, node))
+      promises.push(
+        this.loadMesh(mesh, node).then((tinyMesh: Mesh) => {
+          node.tinyMesh = tinyMesh
+        })
+      )
     }
 
-    return Promise.all(promises).then(() => {})
+    return Promise.all(promises).then(() => {
+      return node.tinyMesh
+    })
   }
 
   /**
@@ -179,6 +197,7 @@ export default class GLTFLoader {
     }
 
     return Promise.all(promises).then(() => {
+      console.log('tinyMesh', node.tinyMesh)
       return node.tinyMesh
     })
   }
@@ -212,7 +231,11 @@ export default class GLTFLoader {
       // TODO:如果没有材质属性时,采用默认材质
     } else {
       const material = this.json.materials[primitives.material]
-      promises.push(this.loadMaterial(material).then(() => {}))
+      promises.push(
+        this.loadMaterial(material).then((tinyMaterial: Material) => {
+          tinyMesh.material = tinyMaterial
+        })
+      )
     }
 
     callback(tinyMesh)
