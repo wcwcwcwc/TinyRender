@@ -33,6 +33,10 @@ uniform vec4 u_lightingIntensity;
     uniform sampler2D u_ambientOcclusionTextureSampler;
 #endif
 
+#ifdef BASE_COLOR_TEXTURE
+    uniform sampler2D u_baseColorTextureSampler;
+#endif
+
 #include <sphericalHarmonicsIrradianceDeclaration>
 
 in vec3 v_worldPosition;
@@ -336,6 +340,13 @@ void main() {
     // albedo
     vec3 surfaceAlbedo = u_baseColor.rgb;
     float alpha = u_baseColor.a;
+
+    // 存在baseColor贴图时，albedo
+    #ifdef BASE_COLOR_TEXTURE
+        vec4 albedoTexture = texture(u_baseColorTextureSampler, v_mainUV1);
+        surfaceAlbedo *= toLinearSpace(albedoTexture.rgb);
+    #endif 
+
     // ao
     vec3 ambientOcclusionColor = vec3(1., 1., 1.);
     // 存在AO贴图时

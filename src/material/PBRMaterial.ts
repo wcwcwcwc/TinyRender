@@ -501,6 +501,10 @@ export default class PBRMaterial extends Material {
         this.defines.push('#define AMBIENT_OCCLUSION_TEXTURE')
       }
 
+      if (this.baseColorTexture && this.baseColorTexture.loaded) {
+        this.defines.push('#define BASE_COLOR_TEXTURE')
+      }
+
       // 输入金属度粗糙度贴图时
       if (this.metallicRoughnessTexture) {
         this.defines.push('#define METALLICROUGHNESSTEXTURE_ENABLED')
@@ -676,6 +680,15 @@ export default class PBRMaterial extends Material {
         gl.uniform1i(uniformLocation, 7)
       }
 
+      if (
+        key === 'u_baseColorTextureSampler' &&
+        this.baseColorTexture &&
+        this.baseColorTexture.loaded
+      ) {
+        gl.activeTexture(gl.TEXTURE8)
+        gl.bindTexture(gl.TEXTURE_2D, this.baseColorTexture.webglTexture)
+        gl.uniform1i(uniformLocation, 8)
+      }
       if (this.irradianceSHEnabled && this.reflectionTexture) {
         let SH = this.reflectionTexture.sphericalHarmonics
         if (SH) {
