@@ -310,7 +310,7 @@ export default class Engine {
       for (let key in attributesLocations) {
         let bufferAttribute = attributes[key]
         let attributeLocation = attributesLocations[key]
-        if (attributes[key]) {
+        if (attributes[key] && !bufferAttribute.vertexBuffer) {
           let vertexBuffer = new VertexBuffer(
             this._gl,
             bufferAttribute,
@@ -321,10 +321,16 @@ export default class Engine {
           mesh.vertexBufferArray.push(vertexBuffer)
         }
       }
-      mesh.indexBuffer = new IndexBuffer(this._gl, mesh.index, false)
+      if (!mesh.indexBuffer) {
+        mesh.indexBuffer = new IndexBuffer(this._gl, mesh.index, false)
+      }
       this._gl.useProgram(program.program)
-      mesh.vao = new VertexArrayObject(this._gl)
-      mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
+      if (mesh.vao) {
+        mesh.vao.bind()
+      } else {
+        mesh.vao = new VertexArrayObject(this._gl)
+        mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
+      }
       if (material.isReadyToDraw()) {
         // uniform = base_uniform + material_uniform + effect_uniform
         // base_uniform: 通用uniform,在基类material完成，包括了如MVP、color在内的通用uniform
