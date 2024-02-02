@@ -325,13 +325,13 @@ export default class Engine {
         mesh.indexBuffer = new IndexBuffer(this._gl, mesh.index, false)
       }
       this._gl.useProgram(program.program)
-      if (mesh.vao) {
-        mesh.vao.bind()
-      } else {
-        mesh.vao = new VertexArrayObject(this._gl)
-        mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
-      }
+
       if (material.isReadyToDraw()) {
+        if (!mesh.vao) {
+          mesh.vao = new VertexArrayObject(this._gl)
+          mesh.vao.packUp(mesh.vertexBufferArray, mesh.indexBuffer)
+        }
+        mesh.vao.bind()
         // uniform = base_uniform + material_uniform + effect_uniform
         // base_uniform: 通用uniform,在基类material完成，包括了如MVP、color在内的通用uniform
         // material_uniform: 材质类uniform，在子类material完成，如phong材质中的specularStrength、shininess等
@@ -347,7 +347,6 @@ export default class Engine {
         }
 
         // draw
-        mesh.vao.bind()
         this._gl.enable(this._gl.DEPTH_TEST)
         this._gl.depthFunc(this._gl.LEQUAL)
         if (mesh.material.opacity === 1) {
