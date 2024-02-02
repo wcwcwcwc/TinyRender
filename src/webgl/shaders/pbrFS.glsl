@@ -352,6 +352,12 @@ void main() {
     // 存在AO贴图时
     #ifdef AMBIENT_OCCLUSION_TEXTURE
         ambientOcclusionColor = texture(u_ambientOcclusionTextureSampler, v_mainUV1).rgb;
+
+        // AO贴图只从R值取值
+        #ifdef AMBIENT_OCCLUSION_RED_ONLY
+            ambientOcclusionColor = vec3(ambientOcclusionColor.r);
+        #endif
+
     #endif
     vec3 baseColor = surfaceAlbedo;
 
@@ -367,10 +373,12 @@ void main() {
     reflectivityBlock(
     u_reflectivityColor, 
     surfaceAlbedo, 
-    metallicReflectanceFactors, 
+    metallicReflectanceFactors,
+
     #ifdef METALLICROUGHNESSTEXTURE_ENABLED
         surfaceMetallicOrReflectivityColorMap, 
     #endif
+
     reflectivityOut
     );
     float roughness = reflectivityOut.roughness;

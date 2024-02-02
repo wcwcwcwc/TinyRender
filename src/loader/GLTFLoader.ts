@@ -15,6 +15,9 @@ import { loadFile } from '../misc/Ajax'
 import CONSTANTS from '../texture/Constants'
 import Texture from '../texture/Texture'
 import Texture2D from '../texture/Texture2D'
+import { DataReader, readAsync, IDataBuffer } from '../misc/DataReader'
+
+type Nullable<T> = T | null
 
 const enum ComponentType {
   BYTE = 5120,
@@ -29,6 +32,12 @@ const enum ComponentType {
 
   FLOAT = 5126
 }
+
+export interface IGLTFLoaderData {
+  json: Object
+
+  bin: Nullable<IDataBuffer>
+}
 export default class GLTFLoader {
   engine: Engine
   path: string
@@ -36,6 +45,9 @@ export default class GLTFLoader {
   callback: Function
   modelUrl: string
   json: any
+  bin: any
+  modelSuffix: string
+  useArrayBuffer: boolean
   constructor(
     engine: Engine,
     path: string,
@@ -47,17 +59,176 @@ export default class GLTFLoader {
     this.fileName = fileName
     this.callback = callback
     this.modelUrl = path + fileName
-    loadFile(
-      this.modelUrl,
-      data => {
-        this.modelRequestCallback(data)
-      },
-      undefined,
-      undefined,
-      false,
-      () => {}
-    )
+    this.modelSuffix = this.fileName
+      .substring(this.fileName.lastIndexOf('.'), this.fileName.length)
+      .toLowerCase()
+    this.useArrayBuffer = this.modelSuffix === '.glb'
+    this.load()
   }
+
+  load() {
+    // GLB
+    if (this.useArrayBuffer) {
+      loadFile(
+        this.modelUrl,
+        data => {
+          this.unpackBinary(
+            new DataReader({
+              readAsync: (byteOffset, byteLength) =>
+                readAsync(data as ArrayBuffer, byteOffset, byteLength),
+              byteLength: (data as ArrayBuffer).byteLength
+            })
+          ).then(loaderData => {
+            this.json = loaderData.json
+            this.bin = loaderData.bin
+            this.addIndex()
+            this.loadJson().then(() => {
+              console.log('loaded')
+            })
+          })
+        },
+        undefined,
+        undefined,
+        true,
+        () => {}
+      )
+    } else {
+      // GLTF
+      loadFile(
+        this.modelUrl,
+        data => {
+          this.modelRequestCallback(data)
+        },
+        undefined,
+        undefined,
+        false,
+        () => {}
+      )
+    }
+  }
+
+  /**
+   * 解析GLB文件
+   * @param dataReader
+   */
+  unpackBinary(dataReader: DataReader) {
+    // 首先解码GLB文件头，magic + version + length 表示整个GLB的长度，共12字节，
+    // 再然后是glb json的长度和规范（是否是二进制或json），共8字节，一共20字节
+    //magic + version + length + json length + json format
+    return dataReader.loadAsync(20).then(() => {
+      const Binary = {
+        Magic: 0x46546c67
+      }
+
+      const magic = dataReader.readUint32()
+      if (magic !== Binary.Magic) {
+        throw new Error('当前GLB文件头不符合规范')
+      }
+
+      const version = dataReader.readUint32()
+
+      const length = dataReader.readUint32()
+      if (
+        dataReader.buffer.byteLength !== 0 &&
+        length !== dataReader.buffer.byteLength
+      ) {
+        throw new Error('当前GLB文件头的长度与真实GLB长度不符')
+      }
+
+      let unpacked: Promise<IGLTFLoaderData>
+      switch (version) {
+        // case 1: {
+        //   console.error('抱歉，暂未支持gltf1.0')
+        //   break
+        // }
+        case 2: {
+          unpacked = this.unpackBinaryV2(dataReader, length)
+          break
+        }
+        default: {
+          throw new Error('Unsupported version: ' + version)
+        }
+      }
+      return unpacked
+    })
+  }
+
+  /**
+   * 解码gltf2.0版本的json体和chunk
+   * @param dataReader
+   * @param length
+   */
+  unpackBinaryV2(
+    dataReader: DataReader,
+    length: number
+  ): Promise<IGLTFLoaderData> {
+    const ChunkFormat = {
+      JSON: 0x4e4f534a,
+      BIN: 0x004e4942
+    }
+
+    // json体
+    const chunkLength = dataReader.readUint32()
+    const chunkFormat = dataReader.readUint32()
+    if (chunkFormat !== ChunkFormat.JSON) {
+      throw new Error('第一个chunk不是json格式')
+    }
+
+    // 不存在chunk
+    if (dataReader.byteOffset + chunkLength === length) {
+      return dataReader.loadAsync(chunkLength).then(() => {
+        return {
+          json: JSON.parse(dataReader.readString(chunkLength)),
+          bin: null
+        }
+      })
+    }
+
+    // 解析chunk
+    return dataReader.loadAsync(chunkLength + 8).then(() => {
+      const data: IGLTFLoaderData = {
+        json: JSON.parse(dataReader.readString(chunkLength)),
+        bin: null
+      }
+
+      const readAsync = (): Promise<IGLTFLoaderData> => {
+        const chunkLength = dataReader.readUint32()
+        const chunkFormat = dataReader.readUint32()
+
+        switch (chunkFormat) {
+          case ChunkFormat.JSON: {
+            throw new Error('Unexpected JSON chunk')
+          }
+          case ChunkFormat.BIN: {
+            const startByteOffset = dataReader.byteOffset
+            data.bin = {
+              readAsync: (byteOffset, byteLength) =>
+                dataReader.buffer.readAsync(
+                  startByteOffset + byteOffset,
+                  byteLength
+                ),
+              byteLength: chunkLength
+            }
+            dataReader.skipBytes(chunkLength)
+            break
+          }
+          default: {
+            dataReader.skipBytes(chunkLength)
+            break
+          }
+        }
+
+        if (dataReader.byteOffset !== length) {
+          return dataReader.loadAsync(8).then(readAsync)
+        }
+
+        return Promise.resolve(data)
+      }
+
+      return readAsync()
+    })
+  }
+
   modelRequestCallback(data: any) {
     this.json = JSON.parse(data)
     this.addIndex()
@@ -153,8 +324,8 @@ export default class GLTFLoader {
     if (meshIndex !== undefined) {
       const mesh = this.json.meshes[meshIndex]
       promises.push(
-        this.loadMesh(mesh, node).then((tinyMesh: Mesh) => {
-          node.tinyMesh = tinyMesh
+        this.loadMesh(mesh, node).then((meshes: Array<Mesh>) => {
+          node.tinyMesh = meshes
         })
       )
     }
@@ -173,14 +344,16 @@ export default class GLTFLoader {
    * @param mesh
    * @returns
    */
-  loadMesh(mesh: any, node: any): Promise<Mesh> {
+  loadMesh(mesh: any, node: any): Promise<Array<Mesh>> {
     const promises = new Array<Promise<any>>()
     const primitives = mesh.primitives
     if (primitives[0].index == undefined) {
       this.assignIndex(primitives)
     }
-    if (primitives.length === 1) {
-      const primitive = mesh.primitives[0]
+
+    let meshes: Array<Mesh> = []
+    for (let index = 0; index < primitives.length; index++) {
+      const primitive = primitives[index]
       promises.push(
         this.loadMeshPrimitives(primitive, (tinyMesh: Mesh) => {
           if (node.rotation) {
@@ -191,14 +364,39 @@ export default class GLTFLoader {
               node.rotation[3]
             )
           }
-          node.tinyMesh = tinyMesh
+          if (node.translation) {
+            tinyMesh.position.set(
+              node.translation[0],
+              node.translation[1],
+              node.translation[2]
+            )
+          }
+          meshes.push(tinyMesh)
+          // node.tinyMesh = tinyMesh
         })
       )
     }
 
+    // if (primitives.length === 1) {
+    //   const primitive = mesh.primitives[0]
+    //   promises.push(
+    //     this.loadMeshPrimitives(primitive, (tinyMesh: Mesh) => {
+    //       if (node.rotation) {
+    //         tinyMesh.quaternion.set(
+    //           node.rotation[0],
+    //           node.rotation[1],
+    //           node.rotation[2],
+    //           node.rotation[3]
+    //         )
+    //       }
+    //       node.tinyMesh = tinyMesh
+    //     })
+    //   )
+    // }
+
     return Promise.all(promises).then(() => {
-      console.log('tinyMesh', node.tinyMesh)
-      return node.tinyMesh
+      console.log('tinyMesh', meshes)
+      return meshes
     })
   }
 
@@ -220,6 +418,7 @@ export default class GLTFLoader {
     const promises = new Array<Promise<any>>()
     let promise: Promise<any>
 
+    // 单个mesh
     let tinyMesh = new Mesh('', {})
 
     // attributes
@@ -403,13 +602,33 @@ export default class GLTFLoader {
     const samplerData = this.loadSampler(sampler)
     const promises = new Array<Promise<any>>()
 
-    const tinyTexture = new Texture2D(this.engine, this.path + image.uri, {
-      noMipmap: samplerData.noMipMaps,
-      magFilter: samplerData.magFilter,
-      minFilter: samplerData.minFilter,
-      wrapS: samplerData.wrapS,
-      wrapT: samplerData.wrapT
-    })
+    // 如果是GLTF，图片资源从请求中获取
+    const tinyTexture = new Texture2D(
+      this.engine,
+      this.bin ? '' : this.path + image.uri,
+      {
+        noMipmap: samplerData.noMipMaps,
+        magFilter: samplerData.magFilter,
+        minFilter: samplerData.minFilter,
+        wrapS: samplerData.wrapS,
+        wrapT: samplerData.wrapT
+      }
+    )
+
+    // 如果是GLB，图片资源从bufferView中获取
+    if (this.bin) {
+      const bufferView = this.json.bufferViews[image.bufferView]
+      image.data = this.loadBufferView(bufferView).then((data: any) => {
+        const img = new Image()
+        const type = image.mimeType
+        const blob = new Blob([data], { type })
+        const url = URL.createObjectURL(blob)
+        img.src = url
+        img.addEventListener('load', () => {
+          tinyTexture.update(img)
+        })
+      })
+    }
     promises.push(
       new Promise((resolve, reject) => {
         tinyTexture.addLoadedCallback(() => {
@@ -522,6 +741,9 @@ export default class GLTFLoader {
       metallic: 1,
       roughness: 1
     })
+
+    // AO从AO贴图的通道读取
+    tinyMaterial.ambientOcclusionTextureReadOnly = true
     return tinyMaterial
   }
 
@@ -663,6 +885,8 @@ export default class GLTFLoader {
     if (!buffer.data) {
       if (buffer.uri) {
         buffer.data = this.loadUri(buffer.uri)
+      } else {
+        buffer.data = this.bin.readAsync(0, buffer.byteLength)
       }
     }
     return buffer.data.then((data: any) => {

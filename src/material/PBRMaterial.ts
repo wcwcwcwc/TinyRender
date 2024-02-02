@@ -88,6 +88,8 @@ export default class PBRMaterial extends Material {
   public emissiveTexture: Texture | undefined
   public ambientOcclusionTexture: Texture | undefined
 
+  public ambientOcclusionTextureReadOnly: Boolean = false
+
   private _irradianceMapEnabled: boolean = false
   private _prefilteredEnvironmentMapEnabled: boolean = false
   private _irradianceSHEnabled: boolean = false
@@ -499,6 +501,9 @@ export default class PBRMaterial extends Material {
       }
       if (this.ambientOcclusionTexture && this.ambientOcclusionTexture.loaded) {
         this.defines.push('#define AMBIENT_OCCLUSION_TEXTURE')
+        if (this.ambientOcclusionTextureReadOnly) {
+          this.defines.push('#define AMBIENT_OCCLUSION_RED_ONLY')
+        }
       }
 
       if (this.baseColorTexture && this.baseColorTexture.loaded) {

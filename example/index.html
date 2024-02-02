@@ -27,59 +27,100 @@
   <script src="../dist/tinyRender.umd.js"></script>
   <script type="module">
     import { GUI } from './utils/dat.gui.module.js'
-    // 实例化引擎
-    let renderer = new TinyRender.Engine({
-      container: 'webglDOM'
-    })
-    // 添加相机
-    let camera = new TinyRender.PerspectiveCamera(
-      {
-        fov: 75,
-        aspect: window.innerWidth / window.innerHeight,
-        nearZ: 1,
-        farZ: 1000
-      },
-      renderer.canvas
-    )
-    camera.setPosition([0, 0, -3])
-    camera.lookAt = [0, 0, 0]
-    renderer.addCamera(camera)
-    // 设置相机可交互
-    renderer.addCameraOrbitControls()
-
-    let environmentTexture = new TinyRender.HDRCubeTexture(renderer, './assets/texture/environment.hdr', 512);
-
-    new TinyRender.GLTFLoader(renderer, "https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf", (gltf) => {
-      gltf.map(mesh => {
-        mesh.material.reflectionTexture = environmentTexture
-        mesh.material.irradianceSHEnabled = true;
-        mesh.material.prefilteredEnvironmentMapEnabled = true
-        renderer.addMesh(mesh)
+      // 实例化引擎
+      let renderer = new TinyRender.Engine({
+        container: 'webglDOM'
       })
+      // 添加相机
+      let camera = new TinyRender.PerspectiveCamera(
+        {
+          fov: 75,
+          aspect: window.innerWidth / window.innerHeight,
+          nearZ: 1,
+          farZ: 1000
+        },
+        renderer.canvas
+      )
+      camera.setPosition([-250, 0, -3])
+      camera.lookAt = [0, 0, 0]
+      renderer.addCamera(camera)
+      // 设置相机可交互
+      renderer.addCameraOrbitControls()
 
-      console.log(gltf)
-    })
+      let environmentTexture = new TinyRender.HDRCubeTexture(
+        renderer,
+        './assets/texture/environment.hdr',
+        512
+      )
+      let envBRDFTexture = new TinyRender.Texture2D(
+        renderer,
+        './assets/texture/uncorrelatedBRDF_RGBD.png',
+        {
+          unpackFlipY: true
+        }
+      )
+      // renderer.addSkyBox(environmentTexture)
 
+      // new TinyRender.GLTFLoader(renderer, "https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf", (gltf) => {
+      //   gltf.map(mesh => {
+      //     mesh.material.reflectionTexture = environmentTexture
+      //     // mesh.material.environmentBRDFTexture=envBRDFTexture
+      //     mesh.material.irradianceSHEnabled = true;
+      //     mesh.material.prefilteredEnvironmentMapEnabled = true
+      //     renderer.addMesh(mesh)
+      //   })
 
-    // gui
-    const effectController = {
-    }
+      //   console.log(gltf)
+      // })
 
-    function initGUI() {
-      const gui = new GUI()
-    }
-    initGUI()
+      new TinyRender.GLTFLoader(
+        renderer,
+        './assets/model/',
+        'SM_DFZM2.glb',
+        gltf => {
+          // gltf.map(mesh => {
+            // mesh.material.reflectionTexture = environmentTexture
+            // // mesh.material.environmentBRDFTexture=envBRDFTexture
+            // mesh.material.irradianceSHEnabled = true
+            // mesh.material.prefilteredEnvironmentMapEnabled = true
+            // renderer.addMesh(mesh)
+          // })
+          for (let nodeIndex = 0; nodeIndex < gltf.length; nodeIndex++) {
+            const meshes = gltf[nodeIndex];
+            for (let meshIndex = 0; meshIndex < meshes.length; meshIndex++) {
+              const mesh = meshes[meshIndex];
+              mesh.material.reflectionTexture = environmentTexture
+              // mesh.material.irradianceSHEnabled = true
+              // mesh.material.prefilteredEnvironmentMapEnabled = true
+              console.log(mesh)
+              renderer.addMesh(mesh)
+              
+            }
+            
+          }
 
-    function animate() {
-      requestAnimationFrame(animate)
+          // console.log(gltf)
+        }
+      )
+
+      // gui
+      const effectController = {}
+
+      function initGUI() {
+        const gui = new GUI()
+      }
+      initGUI()
+
+      function animate() {
+        requestAnimationFrame(animate)
+        renderer.render()
+      }
+
       renderer.render()
-    }
 
-    renderer.render();
-
-    animate()
-    console.log(renderer)
-  </script>
+      animate()
+      console.log(renderer)
+    </script>
 </body>
 
 </html>
