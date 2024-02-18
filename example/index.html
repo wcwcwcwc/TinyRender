@@ -41,7 +41,8 @@
         },
         renderer.canvas
       )
-      camera.setPosition([-250, 0, -3])
+      let cameraPosition = [-90, 0, 90]
+      camera.setPosition(cameraPosition)
       camera.lookAt = [0, 0, 0]
       renderer.addCamera(camera)
       // 设置相机可交互
@@ -76,7 +77,8 @@
       new TinyRender.GLTFLoader(
         renderer,
         './assets/model/',
-        'SM_DFZM2.glb',
+        'stone_lion.glb',
+        // 'SM_DFZM2.glb',
         gltf => {
           // gltf.map(mesh => {
             // mesh.material.reflectionTexture = environmentTexture
@@ -90,8 +92,8 @@
             for (let meshIndex = 0; meshIndex < meshes.length; meshIndex++) {
               const mesh = meshes[meshIndex];
               mesh.material.reflectionTexture = environmentTexture
-              // mesh.material.irradianceSHEnabled = true
-              // mesh.material.prefilteredEnvironmentMapEnabled = true
+              mesh.material.irradianceSHEnabled = true
+              mesh.material.prefilteredEnvironmentMapEnabled = true
               console.log(mesh)
               renderer.addMesh(mesh)
               
@@ -104,16 +106,38 @@
       )
 
       // gui
-      const effectController = {}
-
+      const effectController = {
+        cameraPosition_X: cameraPosition[0],
+        cameraPosition_Y: cameraPosition[1],
+        cameraPosition_Z: cameraPosition[2],
+      }
       function initGUI() {
         const gui = new GUI()
+        gui.add(effectController, 'cameraPosition_X').onChange(function(value) {
+
+          cameraPosition[0] = value
+            camera.setPosition(cameraPosition)
+        })
+        gui.add(effectController, 'cameraPosition_Y').onChange(function(value) {
+
+          cameraPosition[1] = value
+            camera.setPosition(cameraPosition)
+          
+        })
+        gui.add(effectController, 'cameraPosition_Z').onChange(function(value) {
+
+          cameraPosition[2] = value
+            camera.setPosition(cameraPosition)
+          
+        })
       }
       initGUI()
 
       function animate() {
         requestAnimationFrame(animate)
         renderer.render()
+        // console.log(renderer.camera)
+        cameraPosition = [renderer.camera.position.x,renderer.camera.position.y,renderer.camera.position.z]
       }
 
       renderer.render()

@@ -40,6 +40,8 @@ export default class Mesh {
   public rotation: Euler
   public scale: Vector3
   public userData: any
+  public children: Array<Mesh> = []
+  public parent: Mesh | null = null
   constructor(type: string, options: any) {
     this.type = type
     this.options = options
@@ -58,7 +60,31 @@ export default class Mesh {
   setPosition(position: number[]) {
     this.position.set(position[0], position[1], position[2])
   }
+
+  /**
+   * 更新世界矩阵
+   */
   updateWorldMatrix() {
     this.worldMatrix.compose(this.position, this.quaternion, this.scale)
+    if (this.parent) {
+      this.worldMatrix.multiplyMatrices(
+        this.parent.worldMatrix,
+        this.worldMatrix
+      )
+    }
+    if (this.children.length > 0) {
+      for (let index = 0; index < this.children.length; index++) {
+        const childMesh = this.children[index]
+        childMesh.updateWorldMatrix()
+      }
+    }
+  }
+  /**
+   * 添加子mesh
+   * @param childMesh
+   */
+  addChild(childMesh: Mesh) {
+    this.children.push(childMesh)
+    childMesh.parent = this
   }
 }

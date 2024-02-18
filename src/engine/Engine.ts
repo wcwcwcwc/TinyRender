@@ -105,7 +105,8 @@ export default class Engine {
   // 初始化gl尺寸，清除缓冲区
   resize() {
     this._gl.viewport(0, 0, this.width, this.height)
-    this._gl.clearColor(0.85, 0.85, 0.85, 1.0)
+    // this._gl.clearColor(0.85, 0.85, 0.85, 1.0)
+    this._gl.clearColor(0.2, 0.2, 0.3, 1.0)
     this._gl.clear(this._gl.COLOR_BUFFER_BIT)
     this._gl.clear(this._gl.DEPTH_BUFFER_BIT)
     this._gl.clear(this._gl.STENCIL_BUFFER_BIT)
@@ -358,7 +359,9 @@ export default class Engine {
         this._gl.drawElements(
           this._gl.TRIANGLES,
           mesh.indexBuffer.count,
-          this._gl.UNSIGNED_SHORT,
+          mesh.indexBuffer.is32Bits
+            ? this._gl.UNSIGNED_INT
+            : this._gl.UNSIGNED_SHORT,
           0
         )
         mesh.vao.unbind()

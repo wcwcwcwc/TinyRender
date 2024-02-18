@@ -162,6 +162,9 @@ export default class SphericalHarmonics {
 
     // 乘上lambertian系数
     this.scaleLambertianSHCoefficient()
+
+    // 预乘ym基函数的常数项，后会在着色器中与法向量n进行组合
+    this.preScale()
   }
 
   /**
@@ -342,5 +345,20 @@ export default class SphericalHarmonics {
       SphericalHarmonics.SH3ylmBasisConstants[lm] *
       SphericalHarmonics.SH3ylmBasisTrigonometricTerms[lm](direction)
     )
+  }
+
+  /**
+   * 预乘ym基函数的常数项
+   */
+  private preScale() {
+    this.l0m0.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[0])
+    this.l1m_1.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[1])
+    this.l1m0.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[2])
+    this.l1m1.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[3])
+    this.l2m_2.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[4])
+    this.l2m_1.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[5])
+    this.l2m0.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[6])
+    this.l2m1.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[7])
+    this.l2m2.multiplyScalar(SphericalHarmonics.SH3ylmBasisConstants[8])
   }
 }

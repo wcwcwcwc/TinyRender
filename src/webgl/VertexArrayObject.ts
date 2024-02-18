@@ -82,6 +82,7 @@ export class IndexBuffer {
   buffer: WebGLBuffer | null
   bytesPerElement: any
   count: number
+  is32Bits: boolean
   constructor(
     gl: any,
     bufferAttribute: BufferAttribute,
@@ -92,6 +93,7 @@ export class IndexBuffer {
     this.dynamicDraw = Boolean(dynamicDraw)
     this.bytesPerElement = bufferAttribute.array.BYTES_PER_ELEMENT
     this.count = bufferAttribute.count
+    this.is32Bits = this.bytesPerElement === 4 ? true : false
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffer)
     gl.bufferData(

@@ -16,6 +16,7 @@ import CONSTANTS from '../texture/Constants'
 import Texture from '../texture/Texture'
 import Texture2D from '../texture/Texture2D'
 import { DataReader, readAsync, IDataBuffer } from '../misc/DataReader'
+import { Matrix4 } from '../math/Matrix4'
 
 type Nullable<T> = T | null
 
@@ -318,9 +319,19 @@ export default class GLTFLoader {
    * @param node
    * @returns
    */
-  loadNode(node: any): Promise<any> {
+  loadNode(node: any, parentNode?: any): any {
     const promises = new Array<Promise<any>>()
     const meshIndex = node.mesh
+    let worldMatrix = new Matrix4()
+
+    if (node.matrix) {
+      worldMatrix.fromArray(node.matrix)
+    }
+    if (parentNode) {
+      worldMatrix.multiplyMatrices(parentNode.worldMatrix, worldMatrix)
+    }
+    node.worldMatrix = worldMatrix
+
     if (meshIndex !== undefined) {
       const mesh = this.json.meshes[meshIndex]
       promises.push(
@@ -328,11 +339,19 @@ export default class GLTFLoader {
           node.tinyMesh = meshes
         })
       )
-    }
 
-    return Promise.all(promises).then(() => {
-      return node.tinyMesh
-    })
+      return Promise.all(promises).then(() => {
+        return node.tinyMesh
+      })
+    } else {
+      if (node.children) {
+        for (let index = 0; index < node.children.length; index++) {
+          const nodeChild = node.children[index]
+          return this.loadNode(this.json.nodes[nodeChild], node)
+        }
+        // const node = this.json.nodes[index]
+      }
+    }
   }
 
   /**
@@ -371,6 +390,18 @@ export default class GLTFLoader {
               node.translation[2]
             )
           }
+          // worldMatrix由node传入mesh，
+          // node.worldMatrix....
+
+          if (node.worldMatrix) {
+            tinyMesh.worldMatrix = node.worldMatrix
+            node.worldMatrix.decompose(
+              tinyMesh.position,
+              tinyMesh.quaternion,
+              tinyMesh.scale
+            )
+          }
+
           meshes.push(tinyMesh)
           // node.tinyMesh = tinyMesh
         })
