@@ -41,7 +41,7 @@
         },
         renderer.canvas
       )
-      let cameraPosition = [-90, 0, 90]
+      let cameraPosition = [-41, 4, 79]
       camera.setPosition(cameraPosition)
       camera.lookAt = [0, 0, 0]
       renderer.addCamera(camera)
@@ -94,6 +94,8 @@
               mesh.material.reflectionTexture = environmentTexture
               mesh.material.irradianceSHEnabled = true
               mesh.material.prefilteredEnvironmentMapEnabled = true
+
+              mesh.setPosition([0,-50,0])
               console.log(mesh)
               renderer.addMesh(mesh)
               
