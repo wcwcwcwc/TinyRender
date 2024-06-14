@@ -27,6 +27,7 @@ export default class DirectionLight extends Light {
   public scale: any
   public type: string
   public projectionMatrix: Matrix4
+  public direction: Vector3
   left: number
   right: number
   top: number
@@ -53,6 +54,18 @@ export default class DirectionLight extends Light {
     this.near = options.near || -100
     this.far = options.far || 100
     this.projectionMatrix = new Matrix4()
+    this.direction = new Vector3(0, 0, 0)
+    this.direction.subVectors(
+      this.target,
+      new Vector3().fromArray(this.position)
+    )
+  }
+  setPosition(position: number[]) {
+    super.setPosition(position)
+    this.direction.subVectors(
+      this.target,
+      new Vector3().fromArray(this.position)
+    )
   }
   getProjectionMatrix() {
     const dx = (this.right - this.left) / 2

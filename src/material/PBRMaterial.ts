@@ -20,6 +20,7 @@ import TextureCube from '../texture/TextureCube'
 import Engine from '../engine/Engine'
 import EffectMaterial from './EffectMaterial'
 import Texture2D from '../texture/Texture2D'
+import DirectionLight from '../light/DirectionLight'
 
 // 该类默认金属工作流
 
@@ -515,6 +516,22 @@ export default class PBRMaterial extends Material {
         this.defines.push('#define METALLICROUGHNESSTEXTURE_ENABLED')
       }
 
+      // 灯光 PBR材质灯光走Disney规则的BRDF
+      if (engine.light) {
+        this.defines.push('#define LIGHT')
+        if (engine.light.type === 'DirectionLight') {
+          this.defines.push('#define DIRECTION_LIGHT')
+        }
+        if (engine.light.type === 'SpotLight') {
+          this.defines.push('#define SPOT_LIGHT')
+        }
+      }
+
+      // 环境灯
+      if (engine.ambientLight) {
+        this.defines.push('#define AMBIENT_LIGHT')
+      }
+
       headShader_vs = headShader_vs.concat(this.defines)
       headShader_fs = headShader_fs.concat(this.defines)
 
@@ -530,7 +547,7 @@ export default class PBRMaterial extends Material {
 
   public bindUniform(engine: any, mesh: any): void {
     super.bindUniform(engine, mesh)
-    const { camera } = engine
+    const { camera, light, ambientLight } = engine
     let gl = engine._gl
     let uniformLocations = this.program.uniformLocations
     for (let key in uniformLocations) {
@@ -729,6 +746,38 @@ export default class PBRMaterial extends Material {
               break
           }
         }
+      }
+      if (key === 'u_ambientLightStrength' && ambientLight) {
+        gl.uniform1f(uniformLocation, ambientLight.intensity)
+      }
+      if (key === 'u_lightColor' && light) {
+        let color = light.colorArray
+        let r = color[0]
+        let g = color[1]
+        let b = color[2]
+        gl.uniform3f(uniformLocation, r, g, b)
+      }
+      if (key === 'u_lightPosition' && light) {
+        let lightPosition = light.position
+        gl.uniform3f(
+          uniformLocation,
+          lightPosition[0],
+          lightPosition[1],
+          lightPosition[2]
+        )
+      }
+      if (
+        key === 'u_lightDirection' &&
+        light &&
+        light.type === 'DirectionLight'
+      ) {
+        let lightDirection = light.direction
+        gl.uniform3f(
+          uniformLocation,
+          lightDirection.x,
+          lightDirection.y,
+          lightDirection.z
+        )
       }
     }
   }

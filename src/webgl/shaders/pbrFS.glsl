@@ -50,6 +50,10 @@ out vec4 glFragColor;
 
 #include <importanceSampleDeclaration>
 
+#include <lightFragmentDeclaration>
+
+#include <disneyBRDFFragmentDeclaration>
+
 struct reflectivityOutParams {
     float microSurface;
     float roughness;
@@ -68,12 +72,6 @@ struct reflectionOutParams {
 const float NUM_SAMPLES_FLOAT = float(NUM_SAMPLES);
 const float NUM_SAMPLES_FLOAT_INVERSED = 1./NUM_SAMPLES_FLOAT;
 const float K = 4.;
-
-float normalDistributionFunction_TrowbridgeReitzGGX(float NdotH, float alphaG) {
-    float a2 = square(alphaG);
-    float d = NdotH*NdotH*(a2-1.0)+1.0;
-    return a2/(PI*d*d);
-}
 
 float log4(float x) {
     return log2(x)/2.;
@@ -413,6 +411,33 @@ void main() {
     vec3 finalRadianceScaled = finalRadiance*u_lightingIntensity.z;
 
     vec3 diffuseBase = vec3(0., 0., 0.);
+    vec3 specularBase = vec3(0., 0., 0.);
+
+    #ifdef LIGHT
+
+        preLightingInfo preInfo;
+        lightingInfo info;
+        float shadow = 1.;
+        // 存在灯光时，采用Disney规则的BRDF计算
+        #ifdef DIRECTION_LIGHT
+            preInfo = computeDirectionalPreLightingInfo(vec4(u_lightDirection,1.0), viewDirectionW, normalW);
+        #endif
+        preInfo.NdotV = NdotV;
+        preInfo.attenuation = 1.0;
+        preInfo.roughness = roughness;
+        info.diffuse = computeDiffuseLighting(preInfo, u_lightColor);
+        info.specular = computeSpecularLighting(preInfo, normalW, specularEnvironmentR0, specularEnvironmentR90, 0.0, u_lightColor); 
+        shadow = 1.;
+        diffuseBase += info.diffuse*shadow;
+        specularBase += info.specular*shadow;
+
+    #endif
+   
+
+    vec3 finalSpecular = specularBase;
+    finalSpecular = max(finalSpecular, 0.0);
+    vec3 finalSpecularScaled = finalSpecular*u_lightingIntensity.x*u_lightingIntensity.w;
+
     vec3 finalDiffuse = diffuseBase;
     finalDiffuse *= surfaceAlbedo.rgb;
     finalDiffuse = max(finalDiffuse, 0.0);
@@ -438,6 +463,7 @@ void main() {
     finalAmbient +
     finalDiffuse +
     finalIrradiance +
+    finalSpecularScaled +
     finalRadianceScaled +
     finalEmissive, alpha);
 

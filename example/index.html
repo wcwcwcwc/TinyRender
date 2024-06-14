@@ -48,6 +48,42 @@
       // 设置相机可交互
       renderer.addCameraOrbitControls()
 
+      let lightPosition = [-15, 13, 35]
+      let light = new TinyRender.DirectionLight({
+        position: lightPosition,
+        color: 'rgb(1.0,1.0,1.0)',
+        intensity: 1,
+        // 灯光矩阵计算需要
+        // fov: 75,
+        // aspect: window.innerWidth / window.innerHeight,
+        // nearZ: 0.01,
+        // farZ: 1000
+
+        left: -500,
+        right: 500,
+        top: 500,
+        bottom: -500,
+        near: -500,
+        far: 1000
+      })
+      // 添加点光源
+      renderer.addLight(light)
+
+      // 可视化灯光
+      let lightMesh = new TinyRender.CubeMesh(5,5,5)
+
+      let lightMaterial = new TinyRender.Material({
+        color: 'rgba(1.0,0.0,1.0,1.0)',
+        opacity: 1.0,
+        isReceiveShadow: false
+      })
+      lightMaterial.isReceiveShadow = false
+      lightMesh.material = lightMaterial
+      lightMesh.setPosition(lightPosition)
+      lightMesh.userData['isLight'] = true
+
+      renderer.addMesh(lightMesh)
+
       let environmentTexture = new TinyRender.HDRCubeTexture(
         renderer,
         './assets/texture/environment.hdr',
@@ -112,6 +148,9 @@
         cameraPosition_X: cameraPosition[0],
         cameraPosition_Y: cameraPosition[1],
         cameraPosition_Z: cameraPosition[2],
+        LightPosition_X: lightPosition[0],
+        LightPosition_Y: lightPosition[1],
+        LightPosition_Z: lightPosition[2],
       }
       function initGUI() {
         const gui = new GUI()
@@ -131,6 +170,27 @@
           cameraPosition[2] = value
             camera.setPosition(cameraPosition)
           
+        })
+        gui.add(effectController, 'LightPosition_X').onChange(function(value) {
+          if (renderer.light) {
+            lightPosition[0] = value
+            renderer.light.setPosition(lightPosition)
+            lightMesh.setPosition(lightPosition)
+          }
+        })
+        gui.add(effectController, 'LightPosition_Y').onChange(function(value) {
+          if (renderer.light) {
+            lightPosition[1] = value
+            renderer.light.setPosition(lightPosition)
+            lightMesh.setPosition(lightPosition)
+          }
+        })
+        gui.add(effectController, 'LightPosition_Z').onChange(function(value) {
+          if (renderer.light) {
+            lightPosition[2] = value
+            renderer.light.setPosition(lightPosition)
+            lightMesh.setPosition(lightPosition)
+          }
         })
       }
       initGUI()

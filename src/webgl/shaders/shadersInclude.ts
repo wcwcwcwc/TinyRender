@@ -7,6 +7,8 @@ import commonFragmentDeclaration from './shadersInclude/commonFragmentDeclaratio
 import hammersleyFragmentDeclaration from './shadersInclude/hammersleyFragmentDeclaration.glsl'
 import importanceSampleDeclaration from './shadersInclude/importanceSampleDeclaration.glsl'
 import sphericalHarmonicsIrradianceDeclaration from './shadersInclude/sphericalHarmonicsIrradianceDeclaration.glsl'
+import disneyBRDFFragmentDeclaration from './shadersInclude/disneyBRDFFragmentDeclaration.glsl'
+import lightFragmentDeclaration from './shadersInclude/lightFragmentDeclaration.glsl'
 
 export const ShaderInclude: any = {
   shadowMapVertexDeclaration,
@@ -16,5 +18,7 @@ export const ShaderInclude: any = {
   commonFragmentDeclaration,
   hammersleyFragmentDeclaration,
   importanceSampleDeclaration,
-  sphericalHarmonicsIrradianceDeclaration
+  sphericalHarmonicsIrradianceDeclaration,
+  disneyBRDFFragmentDeclaration,
+  lightFragmentDeclaration
 }
