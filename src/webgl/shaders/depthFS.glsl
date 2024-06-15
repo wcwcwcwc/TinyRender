@@ -1,5 +1,6 @@
 
 in float v_depthMetricSM;
+in vec2 v_mainUV1;
 out vec4 outColor;
 
 void main() {

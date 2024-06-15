@@ -60,6 +60,13 @@ export default class Mesh {
   setPosition(position: number[]) {
     this.position.set(position[0], position[1], position[2])
   }
+  setRotation(rotation: number[]) {
+    this.rotation.fromArray(rotation)
+    this.quaternion.setFromEuler(this.rotation, false)
+  }
+  setScale(scale: number[]) {
+    this.scale.fromArray(scale)
+  }
 
   /**
    * 更新世界矩阵

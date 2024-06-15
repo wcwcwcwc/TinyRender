@@ -1,6 +1,7 @@
 
 in vec3 a_position;
 in vec3 a_normal;
+in vec2 a_uv;
 
 
 uniform mat4 u_worldMatrix;
@@ -11,6 +12,7 @@ uniform vec2 u_depthValue;
 uniform vec2 u_biasAndScale;
 
 out float v_depthMetricSM;
+out vec2 v_mainUV1;
 
 void main() {
   
@@ -33,5 +35,6 @@ void main() {
   // 平行光采用正交矩阵，depthValue.x = 1.0，depthValue.y = 2.0，归一化为[0，1]
   // 点光源采用投影矩阵，depthValue.x = nearZ，depthValue.y = nearZ + farZ，归一化为[0，1]
   v_depthMetricSM = (gl_Position.z + u_depthValue.x) / u_depthValue.y;
+  v_mainUV1 = a_uv;
 
 }

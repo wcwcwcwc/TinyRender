@@ -27,186 +27,219 @@
   <script src="../dist/tinyRender.umd.js"></script>
   <script type="module">
     import { GUI } from './utils/dat.gui.module.js'
-      // 实例化引擎
-      let renderer = new TinyRender.Engine({
-        container: 'webglDOM'
-      })
-      // 添加相机
-      let camera = new TinyRender.PerspectiveCamera(
-        {
-          fov: 75,
-          aspect: window.innerWidth / window.innerHeight,
-          nearZ: 1,
-          farZ: 1000
-        },
-        renderer.canvas
-      )
-      let cameraPosition = [-41, 4, 79]
-      camera.setPosition(cameraPosition)
-      camera.lookAt = [0, 0, 0]
-      renderer.addCamera(camera)
-      // 设置相机可交互
-      renderer.addCameraOrbitControls()
+    // 实例化引擎
+    let renderer = new TinyRender.Engine({
+      container: 'webglDOM'
+    })
+    // 添加相机
+    let camera = new TinyRender.PerspectiveCamera(
+      {
+        fov: 75,
+        aspect: window.innerWidth / window.innerHeight,
+        nearZ: 1,
+        farZ: 1000
+      },
+      renderer.canvas
+    )
+    let cameraPosition = [-41, 4, 79]
+    camera.setPosition(cameraPosition)
+    camera.lookAt = [0, 0, 0]
+    renderer.addCamera(camera)
+    // 设置相机可交互
+    renderer.addCameraOrbitControls()
 
-      let lightPosition = [-15, 13, 35]
-      let light = new TinyRender.DirectionLight({
-        position: lightPosition,
-        color: 'rgb(1.0,1.0,1.0)',
-        intensity: 1,
-        // 灯光矩阵计算需要
-        // fov: 75,
-        // aspect: window.innerWidth / window.innerHeight,
-        // nearZ: 0.01,
-        // farZ: 1000
+    let lightPosition = [-15, 13, 35]
+    let light = new TinyRender.DirectionLight({
+      position: lightPosition,
+      color: 'rgb(1.0,1.0,1.0)',
+      intensity: 1,
+      // 灯光矩阵计算需要
+      // fov: 75,
+      // aspect: window.innerWidth / window.innerHeight,
+      // nearZ: 0.01,
+      // farZ: 1000
 
-        left: -500,
-        right: 500,
-        top: 500,
-        bottom: -500,
-        near: -500,
-        far: 1000
-      })
-      // 添加点光源
-      renderer.addLight(light)
+      left: -500,
+      right: 500,
+      top: 500,
+      bottom: -500,
+      near: -500,
+      far: 1000
+    })
+    // 添加点光源
+    renderer.addLight(light)
 
-      // 可视化灯光
-      let lightMesh = new TinyRender.CubeMesh(5,5,5)
+    // 可视化灯光
+    let lightMesh = new TinyRender.CubeMesh(5, 5, 5)
 
-      let lightMaterial = new TinyRender.Material({
-        color: 'rgba(1.0,0.0,1.0,1.0)',
-        opacity: 1.0,
-        isReceiveShadow: false
-      })
-      lightMaterial.isReceiveShadow = false
-      lightMesh.material = lightMaterial
-      lightMesh.setPosition(lightPosition)
-      lightMesh.userData['isLight'] = true
+    let lightMaterial = new TinyRender.Material({
+      color: 'rgba(1.0,0.0,1.0,1.0)',
+      opacity: 1.0,
+      isReceiveShadow: false
+    })
+    lightMaterial.isReceiveShadow = false
+    lightMesh.material = lightMaterial
+    lightMesh.setPosition(lightPosition)
+    lightMesh.userData['isLight'] = true
 
-      renderer.addMesh(lightMesh)
+    renderer.addMesh(lightMesh)
 
-      let environmentTexture = new TinyRender.HDRCubeTexture(
-        renderer,
-        './assets/texture/environment.hdr',
-        512
-      )
-      let envBRDFTexture = new TinyRender.Texture2D(
-        renderer,
-        './assets/texture/uncorrelatedBRDF_RGBD.png',
-        {
-          unpackFlipY: true
+    let shadowPosition = {
+      bias: 0.01,
+      normalBias: 0.001,
+    }
+    renderer.addShadow(true, {
+      light,
+      bias: shadowPosition.bias,
+      normalBias: shadowPosition.normalBias,
+      // sample:'POISSON'
+      // sample: 'PCSS',
+      // sample:'PCF',
+      PCSSSearchRadius: 37,
+      PCSSFilterRadius: 37,
+      enableCascadedShadowMap: true, // 是否开启CSM，级联阴影
+      cascadesNum:2
+      
+    })
+
+    let planeMesh = new TinyRender.PlaneMesh(8000, 8000)
+    planeMesh.setPosition([0, -50, 0])
+    planeMesh.setRotation([-Math.PI / 2, 0, 0])
+
+    let planeMaterial = new TinyRender.PhongMaterial({
+      specularStrength: 0.5,
+      shininess: 32,
+      color: 'rgba(1.0,1.0,1.0,1.0)',
+      opacity: 1.0
+    })
+
+    // 添加材质
+    planeMesh.material = planeMaterial
+    renderer.addMesh(planeMesh)
+
+    let environmentTexture = new TinyRender.HDRCubeTexture(
+      renderer,
+      './assets/texture/environment.hdr',
+      512
+    )
+    let envBRDFTexture = new TinyRender.Texture2D(
+      renderer,
+      './assets/texture/uncorrelatedBRDF_RGBD.png',
+      {
+        unpackFlipY: true
+      }
+    )
+    // renderer.addSkyBox(environmentTexture)
+
+    // new TinyRender.GLTFLoader(renderer, "https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf", (gltf) => {
+    //   gltf.map(mesh => {
+    //     mesh.material.reflectionTexture = environmentTexture
+    //     // mesh.material.environmentBRDFTexture=envBRDFTexture
+    //     mesh.material.irradianceSHEnabled = true;
+    //     mesh.material.prefilteredEnvironmentMapEnabled = true
+    //     renderer.addMesh(mesh)
+    //   })
+
+    //   console.log(gltf)
+    // })
+
+    new TinyRender.GLTFLoader(
+      renderer,
+      './assets/model/',
+      'stone_lion.glb',
+      // 'SM_DFZM2.glb',
+      gltf => {
+        // gltf.map(mesh => {
+        // mesh.material.reflectionTexture = environmentTexture
+        // // mesh.material.environmentBRDFTexture=envBRDFTexture
+        // mesh.material.irradianceSHEnabled = true
+        // mesh.material.prefilteredEnvironmentMapEnabled = true
+        // renderer.addMesh(mesh)
+        // })
+        for (let nodeIndex = 0; nodeIndex < gltf.length; nodeIndex++) {
+          const meshes = gltf[nodeIndex];
+          for (let meshIndex = 0; meshIndex < meshes.length; meshIndex++) {
+            const mesh = meshes[meshIndex];
+            mesh.material.reflectionTexture = environmentTexture
+            mesh.material.irradianceSHEnabled = true
+            mesh.material.prefilteredEnvironmentMapEnabled = true
+
+            mesh.setPosition([0, -50, 0])
+            console.log(mesh)
+            renderer.addMesh(mesh)
+
+          }
+
         }
-      )
-      // renderer.addSkyBox(environmentTexture)
 
-      // new TinyRender.GLTFLoader(renderer, "https://www.babylonjs.com/Assets/DamagedHelmet/glTF/", "DamagedHelmet.gltf", (gltf) => {
-      //   gltf.map(mesh => {
-      //     mesh.material.reflectionTexture = environmentTexture
-      //     // mesh.material.environmentBRDFTexture=envBRDFTexture
-      //     mesh.material.irradianceSHEnabled = true;
-      //     mesh.material.prefilteredEnvironmentMapEnabled = true
-      //     renderer.addMesh(mesh)
-      //   })
+        // console.log(gltf)
+      }
+    )
 
-      //   console.log(gltf)
-      // })
+    // gui
+    const effectController = {
+      cameraPosition_X: cameraPosition[0],
+      cameraPosition_Y: cameraPosition[1],
+      cameraPosition_Z: cameraPosition[2],
+      LightPosition_X: lightPosition[0],
+      LightPosition_Y: lightPosition[1],
+      LightPosition_Z: lightPosition[2],
+    }
+    function initGUI() {
+      const gui = new GUI()
+      gui.add(effectController, 'cameraPosition_X').onChange(function (value) {
 
-      new TinyRender.GLTFLoader(
-        renderer,
-        './assets/model/',
-        'stone_lion.glb',
-        // 'SM_DFZM2.glb',
-        gltf => {
-          // gltf.map(mesh => {
-            // mesh.material.reflectionTexture = environmentTexture
-            // // mesh.material.environmentBRDFTexture=envBRDFTexture
-            // mesh.material.irradianceSHEnabled = true
-            // mesh.material.prefilteredEnvironmentMapEnabled = true
-            // renderer.addMesh(mesh)
-          // })
-          for (let nodeIndex = 0; nodeIndex < gltf.length; nodeIndex++) {
-            const meshes = gltf[nodeIndex];
-            for (let meshIndex = 0; meshIndex < meshes.length; meshIndex++) {
-              const mesh = meshes[meshIndex];
-              mesh.material.reflectionTexture = environmentTexture
-              mesh.material.irradianceSHEnabled = true
-              mesh.material.prefilteredEnvironmentMapEnabled = true
+        cameraPosition[0] = value
+        camera.setPosition(cameraPosition)
+      })
+      gui.add(effectController, 'cameraPosition_Y').onChange(function (value) {
 
-              mesh.setPosition([0,-50,0])
-              console.log(mesh)
-              renderer.addMesh(mesh)
-              
-            }
-            
-          }
+        cameraPosition[1] = value
+        camera.setPosition(cameraPosition)
 
-          // console.log(gltf)
+      })
+      gui.add(effectController, 'cameraPosition_Z').onChange(function (value) {
+
+        cameraPosition[2] = value
+        camera.setPosition(cameraPosition)
+
+      })
+      gui.add(effectController, 'LightPosition_X').onChange(function (value) {
+        if (renderer.light) {
+          lightPosition[0] = value
+          renderer.light.setPosition(lightPosition)
+          lightMesh.setPosition(lightPosition)
         }
-      )
+      })
+      gui.add(effectController, 'LightPosition_Y').onChange(function (value) {
+        if (renderer.light) {
+          lightPosition[1] = value
+          renderer.light.setPosition(lightPosition)
+          lightMesh.setPosition(lightPosition)
+        }
+      })
+      gui.add(effectController, 'LightPosition_Z').onChange(function (value) {
+        if (renderer.light) {
+          lightPosition[2] = value
+          renderer.light.setPosition(lightPosition)
+          lightMesh.setPosition(lightPosition)
+        }
+      })
+    }
+    initGUI()
 
-      // gui
-      const effectController = {
-        cameraPosition_X: cameraPosition[0],
-        cameraPosition_Y: cameraPosition[1],
-        cameraPosition_Z: cameraPosition[2],
-        LightPosition_X: lightPosition[0],
-        LightPosition_Y: lightPosition[1],
-        LightPosition_Z: lightPosition[2],
-      }
-      function initGUI() {
-        const gui = new GUI()
-        gui.add(effectController, 'cameraPosition_X').onChange(function(value) {
-
-          cameraPosition[0] = value
-            camera.setPosition(cameraPosition)
-        })
-        gui.add(effectController, 'cameraPosition_Y').onChange(function(value) {
-
-          cameraPosition[1] = value
-            camera.setPosition(cameraPosition)
-          
-        })
-        gui.add(effectController, 'cameraPosition_Z').onChange(function(value) {
-
-          cameraPosition[2] = value
-            camera.setPosition(cameraPosition)
-          
-        })
-        gui.add(effectController, 'LightPosition_X').onChange(function(value) {
-          if (renderer.light) {
-            lightPosition[0] = value
-            renderer.light.setPosition(lightPosition)
-            lightMesh.setPosition(lightPosition)
-          }
-        })
-        gui.add(effectController, 'LightPosition_Y').onChange(function(value) {
-          if (renderer.light) {
-            lightPosition[1] = value
-            renderer.light.setPosition(lightPosition)
-            lightMesh.setPosition(lightPosition)
-          }
-        })
-        gui.add(effectController, 'LightPosition_Z').onChange(function(value) {
-          if (renderer.light) {
-            lightPosition[2] = value
-            renderer.light.setPosition(lightPosition)
-            lightMesh.setPosition(lightPosition)
-          }
-        })
-      }
-      initGUI()
-
-      function animate() {
-        requestAnimationFrame(animate)
-        renderer.render()
-        // console.log(renderer.camera)
-        cameraPosition = [renderer.camera.position.x,renderer.camera.position.y,renderer.camera.position.z]
-      }
-
+    function animate() {
+      requestAnimationFrame(animate)
       renderer.render()
+      // console.log(renderer.camera)
+      cameraPosition = [renderer.camera.position.x, renderer.camera.position.y, renderer.camera.position.z]
+    }
 
-      animate()
-      console.log(renderer)
-    </script>
+    renderer.render()
+
+    animate()
+    console.log(renderer)
+  </script>
 </body>
 
 </html>

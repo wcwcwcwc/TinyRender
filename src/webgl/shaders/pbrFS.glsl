@@ -54,6 +54,8 @@ out vec4 glFragColor;
 
 #include <disneyBRDFFragmentDeclaration>
 
+#include <shadowMapFragmentDeclaration>
+
 struct reflectivityOutParams {
     float microSurface;
     float roughness;
@@ -427,7 +429,9 @@ void main() {
         preInfo.roughness = roughness;
         info.diffuse = computeDiffuseLighting(preInfo, u_lightColor);
         info.specular = computeSpecularLighting(preInfo, normalW, specularEnvironmentR0, specularEnvironmentR90, 0.0, u_lightColor); 
-        shadow = 1.;
+        
+        #include <shadowMapFragment>
+
         diffuseBase += info.diffuse*shadow;
         specularBase += info.specular*shadow;
 

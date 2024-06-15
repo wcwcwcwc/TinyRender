@@ -1,6 +1,7 @@
 
 in vec3 a_position;
 in vec3 a_normal;
+in vec2 a_uv;
 
 uniform mat4 u_worldMatrix;
 uniform mat4 u_viewMatrix;

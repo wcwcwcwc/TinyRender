@@ -151,21 +151,21 @@ export default class ShadowMapMaterial extends Material {
       )
       gl.uniform1f(uniformLocations['u_cascadeBlendFactor'], 10)
 
-      gl.activeTexture(gl.TEXTURE0)
+      gl.activeTexture(gl.TEXTURE20)
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, fbo.colorTexture)
-      gl.uniform1i(uniformLocations['u_shadowMap'], 0)
+      gl.uniform1i(uniformLocations['u_shadowMap'], 20)
 
-      gl.activeTexture(gl.TEXTURE1)
+      gl.activeTexture(gl.TEXTURE21)
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, fbo.depthTexture)
-      gl.uniform1i(uniformLocations['u_shadowMapDepth'], 1)
+      gl.uniform1i(uniformLocations['u_shadowMapDepth'], 21)
     } else {
-      gl.activeTexture(gl.TEXTURE0)
+      gl.activeTexture(gl.TEXTURE20)
       gl.bindTexture(gl.TEXTURE_2D, fbo.colorTexture)
-      gl.uniform1i(uniformLocations['u_shadowMap'], 0)
+      gl.uniform1i(uniformLocations['u_shadowMap'], 20)
 
-      gl.activeTexture(gl.TEXTURE1)
+      gl.activeTexture(gl.TEXTURE21)
       gl.bindTexture(gl.TEXTURE_2D, fbo.depthTexture)
-      gl.uniform1i(uniformLocations['u_shadowMapDepth'], 1)
+      gl.uniform1i(uniformLocations['u_shadowMapDepth'], 21)
     }
   }
 }

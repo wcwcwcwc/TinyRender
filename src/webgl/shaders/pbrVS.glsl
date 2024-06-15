@@ -7,11 +7,15 @@ uniform mat4 u_worldMatrix;
 uniform mat4 u_viewMatrix;
 uniform mat4 u_projectionMatrix;
 
+#include <shadowMapVertexDeclaration>
+
 out vec3 v_worldPosition;
 out vec3 v_normal;
 out vec2 v_mainUV1;
 
 void main() {
+
+  #include <shadowMapVertex>
 
   gl_Position = u_projectionMatrix * u_viewMatrix * u_worldMatrix * vec4(a_position,1.0);
 
